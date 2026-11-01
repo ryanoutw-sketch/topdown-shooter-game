@@ -47,7 +47,7 @@ class MenuMixin:
             self.text(label if connected else "等待玩家 2 連線…", self.f_m, (235, 235, 235), (SW // 2 - 245, y + 24), "midleft")
             y += 60
         if is_host:
-            self.text(f"對方執行：py cs_online.py --join {ip}    （port {port}）", self.f_m, (230, 200, 90), (SW // 2, 530), "center")
+            self.text(f"對方執行：py topdown_shooter.py --join {ip}    （port {port}）", self.f_m, (230, 200, 90), (SW // 2, 530), "center")
             hint = "M 切換模式 · 1/2/3 難度 · Enter 開始 · ESC 離開"
             if S["mode"] == "coop" and not S["conn"]:
                 hint = "M 切換模式 · 1/2/3 難度 · Enter 單人開始（或等玩家 2）· ESC 離開"

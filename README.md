@@ -4,8 +4,8 @@
 
 ```
 py -m pip install -r requirements.txt        # 第一次才需要
-py main.py --host                            # 主機（可加 --name 小明）
-py main.py --join 192.168.50.112             # 另一台加入
+py topdown_shooter.py --host                            # 主機（可加 --name 小明）
+py topdown_shooter.py --join 192.168.50.112             # 另一台加入
 ```
 
 主機在大廳：**M** 切換合作／對戰、**1/2/3** 選難度、**Enter** 開始、**ESC** 離開。
@@ -16,7 +16,7 @@ py main.py --join 192.168.50.112             # 另一台加入
 
 | 檔案 | 內容 | 什麼時候會看它 |
 |---|---|---|
-| `main.py` | 程式入口：參數、主機迴圈、加入者迴圈、連線/斷線處理 | 想了解整體流程、改啟動參數 |
+| `topdown_shooter.py` | 程式入口：參數、主機迴圈、加入者迴圈、連線/斷線處理 | 想了解整體流程、改啟動參數 |
 | `config.py` | **所有可調數值**：畫面、回合時間、勝利回合數、武器（傷害/射速/視野…）、NPC 難度、合作模式減弱、回血、視野、顏色 | 平衡遊戲最常改這裡 |
 | `map_data.py` | 地圖格局：地板、箱子、出生點、NPC 進攻路線 | 改地圖 |
 | **主機端（遊戲規則）** | | |
@@ -43,7 +43,7 @@ py main.py --join 192.168.50.112             # 另一台加入
   每一幀主機把整個狀態打包成「快照」送給加入者，自己也用同一份快照畫畫面。
 - **事件**：開槍、爆炸、受傷等一次性的東西放在快照的 `ev` 裡，兩端的 `client_fx.py` 依事件播特效和音效。
 - **加入者的移動**在自己電腦上先算（`client.py` 的 `local_motion`），再回報位置給主機檢查，所以不會有網路延遲的頓挫。
-- 依賴方向：`main → client/game → view*/bots/grid → config/map_data/utils`，`config.py` 與 `map_data.py` 不依賴任何其他檔案。
+- 依賴方向：`topdown_shooter.py → client/game → view*/bots/grid → config/map_data/utils`，`config.py` 與 `map_data.py` 不依賴任何其他檔案。
 
 ## 常見調整
 

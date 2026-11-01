@@ -2,8 +2,8 @@
 2D Top Down Shooting Game — 雙人連線版 (Python + pygame)
 
 安裝:  py -m pip install pygame
-主機:  py main.py --host                     （可加 --name 小明）
-加入:  py main.py --join 192.168.50.112      （可加 --name 阿華）
+主機:  py topdown_shooter.py --host                     （可加 --name 小明）
+加入:  py topdown_shooter.py --join 192.168.50.112      （可加 --name 阿華）
 
 模式（主機在大廳選，M 切換）:
   合作：兩人都是防守方，一起對抗 NPC 進攻方（主機可以不等玩家 2，直接單人開打）

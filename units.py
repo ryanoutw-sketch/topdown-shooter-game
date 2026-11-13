@@ -3,7 +3,7 @@
 """
 import math
 
-from config import WEAPONS, REGEN_DELAY
+from config import WEAPONS, REGEN, REGEN_DELAY, SIDEARM
 
 
 class Unit:
@@ -12,11 +12,13 @@ class Unit:
         self.hp = 100.0
         self.alive = True
         self.angle = math.pi / 2 if team == "CT" else -math.pi / 2
-        self.guns = {"primary": primary, "pistol": "pistol"}
+        self.guns = {"primary": primary}
+        if SIDEARM:
+            self.guns["pistol"] = SIDEARM
         self.mag = {k: WEAPONS[w]["mag"] for k, w in self.guns.items()}
         self.res = {k: WEAPONS[w]["res"] for k, w in self.guns.items()}
         self.nades = {"he": 1, "smoke": 1, "molotov": 1}
-        self.slot, self.last_slot = "primary", "pistol"
+        self.slot, self.last_slot = "primary", ("pistol" if SIDEARM else "primary")
         self.cd = self.reload_t = self.recoil = self.moving = 0.0
         self.since_hit = 99.0
         # NPC 用
@@ -38,7 +40,7 @@ class Unit:
                 round(self.reload_t / w["reload"], 2) if (w and self.reload_t > 0) else 0,
                 self.nades["he"], self.nades["smoke"], self.nades["molotov"],
                 round(self.moving, 2), round(self.recoil, 3),
-                int(not self.bot and self.since_hit > REGEN_DELAY and self.hp < 100)]
+                int(REGEN and not self.bot and self.since_hit > REGEN_DELAY and self.hp < 100)]
 
 
 class Nade:

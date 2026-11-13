@@ -8,7 +8,7 @@ import random
 
 from bots import BotMixin
 from config import (DIFFS, COOP_BOT, ROUND_TIME, WIN_ROUNDS, BOT_NAMES, PRIMARIES, NADES, SLOTS,
-                    WEAPONS, R, TILE, REGEN_DELAY, REGEN_RATE)
+                    WEAPONS, R, TILE, REGEN, REGEN_DELAY, REGEN_RATE, SWAP_SIDES)
 from grid import MapGrid, Smoke, Fire
 from map_data import CT_HUMAN_SPOTS, T_HUMAN_SPOTS, T_SPAWN, ROUTES
 from units import Unit, Nade
@@ -58,6 +58,8 @@ class Game(BotMixin, MapGrid):
     def human_team(self, uid, rnd):
         if self.mode == "coop":
             return "CT"
+        if not SWAP_SIDES:  # 固定攻守：主機永遠防守方（上方），加入者永遠進攻方（下方）
+            return "CT" if uid == 0 else "T"
         return "CT" if (uid == 0) == (rnd % 2 == 1) else "T"
 
     def ev(self, *a):
@@ -79,6 +81,7 @@ class Game(BotMixin, MapGrid):
             routes = random.sample(ROUTES, len(ROUTES))
             names = random.sample(BOT_NAMES, n)
             pool = ["ak", "ak", "smg", "shotgun", "m4"] + (["awp"] if self.D["bots"] >= 5 else [])
+            pool = [g for g in pool if g in PRIMARIES] or PRIMARIES  # NPC 也只用允許的槍
             for i, t in enumerate(spots):
                 b = Unit(10 + i, *tile_center(t), "T", random.choice(pool), True, names[i])
                 b.route = [tile_center(w) for w in routes[i % 3 if i < 3 else i % len(routes)]]
@@ -311,7 +314,7 @@ class Game(BotMixin, MapGrid):
     def update_human(self, p, inp, dt):
         self.tick_unit(p, dt)
         p.since_hit += dt
-        if p.since_hit > REGEN_DELAY and p.hp < 100:
+        if REGEN and p.since_hit > REGEN_DELAY and p.hp < 100:
             p.hp = min(100.0, p.hp + REGEN_RATE * dt)
         if not inp:
             p.moving += (0 - p.moving) * min(1.0, dt * 10)
@@ -332,7 +335,7 @@ class Game(BotMixin, MapGrid):
         dx = inp.get("d", 0) - inp.get("a", 0)
         dy = inp.get("s", 0) - inp.get("w", 0)
         walking = inp.get("sh", 0)
-        speed = (p.weapon or WEAPONS["pistol"])["speed"] * (0.5 if walking else 1)
+        speed = (p.weapon or WEAPONS[p.guns["primary"]])["speed"] * (0.5 if walking else 1)
         target = 0.0
         if dx or dy:
             target = 0.4 if walking else 1.0

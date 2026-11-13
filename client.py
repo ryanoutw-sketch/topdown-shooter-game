@@ -48,7 +48,7 @@ def build_input(view, state, keys_down, clicked, wheel, mouse, rects):
     if state == "buy":
         pick = None
         for key in keys_down:
-            if pygame.K_1 <= key <= pygame.K_5:
+            if pygame.K_1 <= key < pygame.K_1 + len(PRIMARIES):
                 pick = PRIMARIES[key - pygame.K_1]
         if clicked and rects:
             for i, r in enumerate(rects):
@@ -58,7 +58,7 @@ def build_input(view, state, keys_down, clicked, wheel, mouse, rects):
         inp["click"] = False
     elif state == "live":
         for key in keys_down:
-            if pygame.K_1 <= key <= pygame.K_5:
+            if pygame.K_1 <= key < pygame.K_1 + len(SLOTS):
                 inp["cmds"].append(["slot", SLOTS[key - pygame.K_1]])
             elif key == pygame.K_q:
                 inp["cmds"].append(["last"])
@@ -122,7 +122,7 @@ class Screen:
             dy = inp["s"] - inp["w"]
             if dx or dy:
                 walking = inp["sh"]
-                speed = (p.weapon or WEAPONS["pistol"])["speed"] * (0.5 if walking else 1)
+                speed = (p.weapon or WEAPONS[p.primary])["speed"] * (0.5 if walking else 1)
                 n = math.hypot(dx, dy)
                 w.move_unit(self.pred, dx / n * speed * dt, dy / n * speed * dt)
             p.x, p.y = self.pred.x, self.pred.y

@@ -12,6 +12,12 @@ ROUND_TIME = 115
 WIN_ROUNDS = 5
 R = 13  # 角色半徑
 
+# ---------------- 規則開關（這個分支：nofog-akm4）
+FOG_OF_WAR = False   # 戰爭迷霧（False = 全地圖都看得到，敵人也不會被牆遮住）
+REGEN = True         # 角色自動回血
+SWAP_SIDES = True    # 對戰模式每回合交換攻守
+SIDEARM = None       # 副武器：None = 沒有手槍；"pistol" = 附 USP-S
+
 # ---------------- 武器
 WEAPONS = {
     "pistol": dict(name="USP-S 手槍", dmg=34, rate=0.17, mag=12, res=48, reload=1.6, spread=0.012,
@@ -27,10 +33,10 @@ WEAPONS = {
     "awp": dict(name="AWP 狙擊槍", dmg=115, rate=1.45, mag=5, res=30, reload=3.6, spread=0.0015,
                 move=0.28, recoil=0.0, speed=185, pellets=1, range=2800, auto=False, snd="awp", length=28, view=840),
 }
-PRIMARIES = ["smg", "m4", "ak", "shotgun", "awp"]
+PRIMARIES = ["m4", "ak"]   # 這個分支只能選 M4 和 AK
 NADES = ("he", "smoke", "molotov")
 NADE_NAMES = {"he": "高爆手榴彈", "smoke": "煙霧彈", "molotov": "燃燒彈"}
-SLOTS = ["primary", "pistol", "he", "smoke", "molotov"]
+SLOTS = ["primary"] + (["pistol"] if SIDEARM else []) + list(NADES)
 
 DIFFS = {
     1: dict(name="簡單", bots=3, react=(0.6, 1.0), err=0.06, turn=4.0, burst=(3, 5)),
@@ -56,7 +62,7 @@ DARK_ALPHA = 245
 TEAM_NAMES = {"CT": "防守方", "T": "進攻方"}
 
 BOT_NAMES = ["Gus", "Kilo", "Raven", "Vex", "Bishop", "Nomad", "Sable"]
-MODE_NAMES = {"coop": "合作：一起打 NPC", "pvp": "對戰：1v1 交換攻守"}
+MODE_NAMES = {"coop": "合作：一起打 NPC", "pvp": "對戰：1v1 交換攻守" if SWAP_SIDES else "對戰：1v1 固定攻守"}
 
 CT_COL = (80, 140, 235)
 T_COL = (225, 140, 55)

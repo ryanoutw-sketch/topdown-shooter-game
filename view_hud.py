@@ -94,10 +94,10 @@ class HudMixin:
         pygame.draw.rect(s, (60, 60, 60), (130, SH - 44, 100, 10))
         pygame.draw.rect(s, (90, 220, 110) if p.hp > 30 else (240, 70, 60), (130, SH - 44, p.hp, 10))
 
-        labels = {"primary": WEAPONS[p.primary]["name"], "pistol": WEAPONS["pistol"]["name"],
+        labels = {"primary": WEAPONS[p.primary]["name"], "pistol": WEAPONS["pistol"]["name"] if "pistol" in WEAPONS else "",
                   "he": f"高爆 x{p.nades['he']}", "smoke": f"煙霧 x{p.nades['smoke']}",
                   "molotov": f"燃燒 x{p.nades['molotov']}"}
-        x = SW // 2 - 330
+        x = SW // 2 - (len(SLOTS) * 134 - 6) // 2
         for i, sl in enumerate(SLOTS):
             sel = sl == p.slot
             empty = sl in NADES and p.nades[sl] <= 0

@@ -128,7 +128,7 @@ class BotMixin:
             if b.react <= 0 and abs(ang_diff(b.angle, ta)) < 0.12 and b.pause <= 0 and b.reload_t <= 0:
                 if b.slot != "primary" and b.mag["primary"] > 0:
                     b.slot = "primary"
-                elif b.mag[b.slot] == 0 and b.res[b.slot] == 0:
+                elif b.mag[b.slot] == 0 and b.res[b.slot] == 0 and "pistol" in b.guns:
                     b.slot = "pistol"
                 if self.try_fire(b):
                     b.burst += 1

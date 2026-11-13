@@ -3,7 +3,8 @@
 """
 import pygame
 
-from config import SW, SH, MW, MH, WIN_ROUNDS, WEAPONS, PRIMARIES, DIFFS, MODE_NAMES, CT_COL, T_COL
+from config import (SW, SH, MW, MH, WIN_ROUNDS, WEAPONS, PRIMARIES, DIFFS, MODE_NAMES, CT_COL, T_COL,
+                    FOG_OF_WAR, SIDEARM, SWAP_SIDES)
 from utils import team_col
 
 
@@ -36,7 +37,9 @@ class MenuMixin:
             self.text("合作模式 NPC 已減弱（傷害 65%、反應較慢、槍法較差）· 兩人合作時 NPC 會多 2 個",
                       self.f_s, (170, 170, 170), (SW // 2, 330), "center")
         else:
-            self.text("每回合交換攻守：防守方在上方出生，進攻方在下方出生", self.f_s, (170, 170, 170), (SW // 2, 287), "center")
+            rule = ("每回合交換攻守：防守方在上方出生，進攻方在下方出生" if SWAP_SIDES
+                    else "固定攻守：主機是防守方（上方出生），加入者是進攻方（下方出生）")
+            self.text(rule, self.f_s, (170, 170, 170), (SW // 2, 287), "center")
 
         y = 380
         for uid in (0, 1):
@@ -98,7 +101,10 @@ class MenuMixin:
             done = uid in S["picks"] or (uid == me and my_pick)
             status.append(f"{S['names'][uid]} {'✔ 已選' if done else '… 選擇中'}")
         self.text("    ".join(status), self.f_m, (230, 230, 230), (SW // 2, SH - 78), "center")
-        self.text("視野依手上的槍決定（拿投擲物時看主武器）· 附帶 USP-S、高爆、煙霧、燃燒彈各一 · 按 1–5 或點擊選擇",
+        tips = (["視野依手上的槍決定（拿投擲物時看主武器）"] if FOG_OF_WAR else [])
+        tips.append(f"附帶{'USP-S、' if SIDEARM else ''}高爆、煙霧、燃燒彈各一")
+        tips.append(f"按 1–{len(PRIMARIES)} 或點擊選擇")
+        self.text(" · ".join(tips),
                   self.f_s, (200, 200, 200), (SW // 2, SH - 36), "center")
         return rects
 

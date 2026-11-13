@@ -10,7 +10,7 @@ import random
 
 import pygame
 
-from config import SW, SH, MW, MH, TILE, ZOOM, VW, VH, WEAPONS, FOG_EDGE, DARK_ALPHA
+from config import SW, SH, MW, MH, TILE, ZOOM, VW, VH, WEAPONS, FOG_EDGE, DARK_ALPHA, FOG_OF_WAR
 from utils import font, view_r
 from view_hud import HudMixin
 from view_menus import MenuMixin
@@ -62,6 +62,8 @@ class View(WorldDrawMixin, HudMixin, MenuMixin):
         return focus
 
     def viewers(self, w, me):
+        if not FOG_OF_WAR:
+            return None  # 沒有戰爭迷霧：全部看得到
         if w.unit(me) is None:
             return None  # 觀戰者看得到全部
         team = self.my_team(w, me)

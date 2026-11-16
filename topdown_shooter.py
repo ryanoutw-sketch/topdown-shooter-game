@@ -63,6 +63,9 @@ def run_host(port, name):
         quit_, keys_down, clicked, wheel = poll()
         if quit_:
             break
+        if ui.anim.intro_on and (keys_down or clicked):  # 入場動畫：任意鍵跳過（這一下不當成其他操作）
+            ui.anim.skip_intro()
+            keys_down, clicked = [], False
         mouse = pygame.mouse.get_pos()
 
         # ---- 連線狀態
@@ -155,6 +158,9 @@ def run_client(host, port, name):
     while True:
         dt = min(clock.tick(FPS) / 1000, 0.05)
         quit_, keys_down, clicked, wheel = poll()
+        if ui.anim.intro_on and (keys_down or clicked):  # 入場動畫：任意鍵跳過
+            ui.anim.skip_intro()
+            keys_down, clicked = [], False
         if quit_ or pygame.K_ESCAPE in keys_down:
             break
         mouse = pygame.mouse.get_pos()

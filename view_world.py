@@ -107,6 +107,7 @@ class WorldDrawMixin:
                     hole = pygame.transform.scale(hole, (rs * 2, rs * 2))
                 hr = hole.get_width() // 2
                 dk.blit(hole, ((v.x - cx) * Z - hr, (v.y - cy) * Z - hr), special_flags=pygame.BLEND_RGBA_MIN)
+            dk.set_alpha(int(255 * self.pan_k))  # 回合開始鏡頭掃過地圖時先不蓋迷霧，掃到自己身上再淡入
             s.blit(dk, (0, 0))
 
         p = w.unit(me)

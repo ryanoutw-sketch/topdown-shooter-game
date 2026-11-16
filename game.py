@@ -8,7 +8,7 @@ import random
 
 from bots import BotMixin
 from config import (DIFFS, COOP_BOT, ROUND_TIME, WIN_ROUNDS, BOT_NAMES, PRIMARIES, NADES, SLOTS,
-                    WEAPONS, R, TILE, REGEN_DELAY, REGEN_RATE)
+                    WEAPONS, R, TILE, REGEN_DELAY, REGEN_RATE, FREEZE_TIME, SLOWMO_TIME, SLOWMO_SCALE, END_TIME)
 from grid import MapGrid, Smoke, Fire
 from map_data import CT_HUMAN_SPOTS, T_HUMAN_SPOTS, T_SPAWN, ROUTES
 from units import Unit, Nade
@@ -43,6 +43,7 @@ class Game(BotMixin, MapGrid):
         self.fire_tiles = set()
         self.events = []
         self.timer, self.end_t, self.rw, self.reason = ROUND_TIME, 0.0, None, ""
+        self.freeze = self.slow = 0.0   # 回合開始凍結時間、回合結束慢動作（剩餘秒數）
         self.next_id = 1
 
     def begin_match(self):
@@ -88,6 +89,7 @@ class Game(BotMixin, MapGrid):
         self.fire_tiles = set()
         self.picks = {}
         self.timer = ROUND_TIME
+        self.freeze = FREEZE_TIME
         self.state = "live"
 
     def end_round(self, rw, reason):
@@ -97,7 +99,8 @@ class Game(BotMixin, MapGrid):
             self.score[rw] += 1
         self.rw, self.reason = rw, reason
         self.state = "end"
-        self.end_t = 3.5
+        self.end_t = END_TIME
+        self.slow = 0.0 if self.timer <= 0 else SLOWMO_TIME  # 有人被擊倒才慢動作，時間到不用
 
     def check_end(self):
         alive_h = [u for u in self.units if not u.bot and u.alive]
@@ -381,11 +384,33 @@ class Game(BotMixin, MapGrid):
             return
         if self.state not in ("live", "end"):
             return
-        self.update_world(dt)
         if self.state == "end":
+            if self.slow > 0:  # 最後一擊慢動作：世界以較慢速度繼續跑，但不能再開槍
+                sdt = dt * SLOWMO_SCALE
+                self.slow = max(0.0, self.slow - dt)
+                self.update_world(sdt)
+                for u in self.units:
+                    if u.alive and not u.bot:
+                        inp = inputs.get(u.uid)
+                        self.update_human(u, dict(inp, click=False, held=0) if inp else None, sdt)
+                self.update_nades(sdt)
+                self.separate()
+            else:
+                self.update_world(dt)
             self.end_t -= dt
             if self.end_t <= 0:
                 self.state = "over" if max(self.score) >= WIN_ROUNDS else "buy"
+            return
+        self.update_world(dt)
+        if self.freeze > 0:  # 回合開始凍結：只能轉頭瞄準，不能移動/開槍，NPC 不動，回合時間不走
+            self.freeze = max(0.0, self.freeze - dt)
+            for u in self.units:
+                if u.alive and not u.bot:
+                    self.tick_unit(u, dt)
+                    inp = inputs.get(u.uid)
+                    if inp and "mx" in inp:
+                        u.angle = math.atan2(inp["my"] - u.y, inp["mx"] - u.x)
+                    u.moving = 0.0
             return
         self.timer -= dt
         for u in self.units:
@@ -403,6 +428,7 @@ class Game(BotMixin, MapGrid):
         snap = {
             "st": self.state, "mode": self.mode, "diff": self.diff, "round": self.round,
             "timer": round(self.timer, 2), "score": self.score, "rw": self.rw, "reason": self.reason,
+            "freeze": round(self.freeze, 3), "slow": round(self.slow, 3), "end_t": round(self.end_t, 3),
             "humans": self.humans, "picks": list(self.picks), "stats": self.stats, "names": self.names,
             "side": [self.human_team(0, nxt), self.human_team(1, nxt)], "conn": connected, "notice": self.notice,
             "u": [u.ser() for u in self.units],

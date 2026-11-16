@@ -1,15 +1,16 @@
 """
 兩端共用的「畫面 + 本機輸入」：
 pygame 初始化、讀鍵盤滑鼠、把輸入打包送給主機、套用快照、
-加入者的本機移動預測與其他角色平滑、選槍後防誤射。
+加入者的本機移動預測與其他角色平滑、選槍後防誤射，以及呼叫 anim.py 播放動畫。
 """
 import math
 
 import pygame
 
+from anim import Animator
 from client_fx import FX
 from client_world import World
-from config import SW, SH, PORT, ZOOM, VW, VH, WEAPONS, PRIMARIES, SLOTS
+from config import SW, SH, PORT, ZOOM, VW, VH, WEAPONS, PRIMARIES, SLOTS, SLOWMO_SCALE
 from sounds import synth_sounds
 from view import View
 
@@ -81,6 +82,7 @@ class Screen:
         self.view = View(screen)
         self.world = World()
         self.fx = FX(sounds)
+        self.anim = Animator(self.view, sounds)
         self.me = me
         self.rects = []
         self.my_pick = None
@@ -120,6 +122,8 @@ class Screen:
                 self.pred = _Pos(p.x, p.y)  # 回合開始或被主機拉回
             dx = inp["d"] - inp["a"]
             dy = inp["s"] - inp["w"]
+            if S.get("freeze", 0) > 0:  # 回合開始凍結時間不能動
+                dx = dy = 0
             if dx or dy:
                 walking = inp["sh"]
                 speed = (p.weapon or WEAPONS["pistol"])["speed"] * (0.5 if walking else 1)
@@ -142,12 +146,19 @@ class Screen:
         self.disp = disp
 
     def draw(self, dt, mouse, is_host, ip="", port=PORT):
-        v, w = self.view, self.world
+        v, w, an = self.view, self.world, self.anim
         S = w.s
         self.rects = []
+        an.tick(dt)
+        if an.intro_on:
+            pygame.mouse.set_visible(True)
+            an.draw_intro(w)
+            return
         if S is None:
             v.message(["連線中…"])
+            an.draw_iris()
             return
+        an.update(S)
         st = S["st"]
         pygame.mouse.set_visible(st not in ("live", "end"))
         if st == "lobby":
@@ -155,12 +166,18 @@ class Screen:
         elif st == "buy":
             self.rects = v.buy_menu(w, self.me, mouse, self.my_pick)
         elif st == "over":
-            v.over(S, self.me, is_host)
+            an.draw_over(S, self.me, is_host)
         else:
-            self.fx.update(dt, w.fires)
+            self.fx.update(dt * (SLOWMO_SCALE if S.get("slow", 0) > 0 else 1.0), w.fires)
+            v.pan_k = an.pan_k(S)
             focus = v.camera(w, self.me, mouse, self.fx)
             v.draw_world(w, self.fx, self.me, mouse)
             v.draw_hud(w, self.fx, self.me, mouse, focus)
+            if st == "live":
+                an.draw_round_start(S, self.me)
+            else:
+                an.draw_end(S, self.me)
+        an.draw_iris()
 
     def make_input(self, keys_down, clicked, wheel, mouse, dt=0.0):
         S = self.world.s

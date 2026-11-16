@@ -5,7 +5,7 @@ import math
 
 import pygame
 
-from config import SW, SH, MW, MH, TILE, ZOOM, WIN_ROUNDS, WEAPONS, SLOTS, NADES, NADE_NAMES, TEAM_NAMES, CT_COL, T_COL
+from config import SW, SH, MW, MH, TILE, ZOOM, WIN_ROUNDS, WEAPONS, SLOTS, NADES, NADE_NAMES, TEAM_NAMES
 from utils import team_col
 
 
@@ -73,16 +73,6 @@ class HudMixin:
         else:
             self.draw_player_hud(p, fx, mouse)
 
-        if S["st"] == "end":
-            if S["mode"] == "coop":
-                big = "防守方獲勝" if S["rw"] else "進攻方獲勝"
-                col = CT_COL if S["rw"] else T_COL
-            else:
-                big = "平手" if S["rw"] < 0 else ("你贏了這回合" if S["rw"] == me else "對手贏了這回合")
-                col = (230, 230, 230) if S["rw"] < 0 else (CT_COL if S["rw"] == me else T_COL)
-            pygame.draw.rect(s, (0, 0, 0), (0, SH // 2 - 80, SW, 130))
-            self.text(big, self.f_xl, col, (SW // 2, SH // 2 - 30), "center")
-            self.text(S["reason"], self.f_m, (220, 220, 220), (SW // 2, SH // 2 + 25), "center")
 
     def draw_player_hud(self, p, fx, mouse):
         s = self.s

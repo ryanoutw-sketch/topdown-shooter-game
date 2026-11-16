@@ -1,9 +1,9 @@
 """
-選單畫面：大廳（模式/難度/玩家）、選槍畫面、整場結算、訊息畫面。
+選單畫面：大廳（模式/難度/玩家）、選槍畫面、訊息畫面。（整場結算畫面在 anim.py）
 """
 import pygame
 
-from config import SW, SH, MW, MH, WIN_ROUNDS, WEAPONS, PRIMARIES, DIFFS, MODE_NAMES, CT_COL, T_COL
+from config import SW, SH, MW, MH, WEAPONS, PRIMARIES, DIFFS, MODE_NAMES
 from utils import team_col
 
 
@@ -60,10 +60,15 @@ class MenuMixin:
 
     def buy_menu(self, w, me, mouse, my_pick):
         s, S = self.s, w.s
-        s.blit(pygame.transform.smoothscale(w.map_surf, (SW, int(SW * MH / MW))), (0, -100))
-        ov = pygame.Surface((SW, SH), pygame.SRCALPHA)
-        ov.fill((10, 12, 18, 215))
-        s.blit(ov, (0, 0))
+        bg = getattr(self, "_buy_bg", None)
+        if bg is None:  # 背景（縮小的地圖＋暗色遮罩）只畫一次，之後重複使用
+            bg = pygame.Surface((SW, SH))
+            bg.blit(pygame.transform.smoothscale(w.map_surf, (SW, int(SW * MH / MW))), (0, -100))
+            ov = pygame.Surface((SW, SH), pygame.SRCALPHA)
+            ov.fill((10, 12, 18, 215))
+            bg.blit(ov, (0, 0))
+            self._buy_bg = bg
+        s.blit(bg, (0, 0))
         team = S["side"][me]
         self.text(f"第 {S['round'] + 1} 回合 — 選擇主武器", self.f_xl, (240, 240, 240), (SW // 2, 60), "center")
         if S["mode"] == "coop":
@@ -101,25 +106,6 @@ class MenuMixin:
         self.text("視野依手上的槍決定（拿投擲物時看主武器）· 附帶 USP-S、高爆、煙霧、燃燒彈各一 · 按 1–5 或點擊選擇",
                   self.f_s, (200, 200, 200), (SW // 2, SH - 36), "center")
         return rects
-
-    def over(self, S, me, is_host):
-        s = self.s
-        s.fill((15, 15, 18))
-        if S["mode"] == "coop":
-            won = S["score"][0] >= WIN_ROUNDS
-            a, b = S["score"]
-        else:
-            won = S["score"][me] >= WIN_ROUNDS
-            a, b = S["score"][me], S["score"][1 - me]
-        self.text("勝利！" if won else "戰敗", self.f_xl, CT_COL if won else T_COL, (SW // 2, 200), "center")
-        self.text(f"最終比分  {a} : {b}", self.f_l, (230, 230, 230), (SW // 2, 290), "center")
-        y = 360
-        for uid in S["humans"]:
-            k, d = S["stats"][uid]
-            self.text(f"{S['names'][uid]}    擊殺 {k}   陣亡 {d}", self.f_m, (210, 210, 210), (SW // 2, y), "center")
-            y += 40
-        hint = "Enter 再來一場 · ESC 回大廳" if is_host else "等待主機決定是否再來一場…"
-        self.text(hint, self.f_m, (200, 200, 200), (SW // 2, 520), "center")
 
     def message(self, lines):
         self.s.fill((22, 20, 18))

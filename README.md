@@ -35,7 +35,8 @@ py topdown_shooter.py --join 192.168.50.112             # 另一台加入
 | `view.py` | 畫面總管：鏡頭、可見判定、戰爭迷霧圓形遮罩 | 改視角/迷霧 |
 | `view_world.py` | 畫地圖上的東西：角色、火、煙、彈道、迷霧 | 改角色外觀 |
 | `view_hud.py` | HUD：小地圖、比分、擊殺紀錄、血量、武器欄、彈藥、準心 | 改介面 |
-| `view_menus.py` | 大廳、選槍、結算畫面 | 改選單 |
+| `view_menus.py` | 大廳、選槍畫面 | 改選單 |
+| `anim.py` | 動畫：入場標題、圓形轉場、回合開始倒數、回合結束慢動作與橫幅、整場結算彩帶 | 改動畫 |
 
 ## 架構重點
 
@@ -55,6 +56,7 @@ py topdown_shooter.py --join 192.168.50.112             # 另一台加入
 | 畫面縮放 | `config.py` → `ZOOM` |
 | 幾回合獲勝、回合時間 | `config.py` → `WIN_ROUNDS`、`ROUND_TIME` |
 | 地圖 | `map_data.py` |
+| 動畫長度（入場、倒數、慢動作…） | `config.py` → 「動畫」區 |
 
 ## 其他
 

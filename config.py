@@ -12,6 +12,14 @@ ROUND_TIME = 115
 WIN_ROUNDS = 5
 R = 13  # 角色半徑
 
+# ---------------- 動畫
+INTRO_TIME = 3.4      # 開啟遊戲的標題動畫（任意鍵可跳過）
+IRIS_TIME = 0.6       # 畫面切換的圓形收合轉場
+FREEZE_TIME = 3.0     # 回合開始凍結時間：倒數 3-2-1，所有人不能移動、不能開槍（主機計時，兩端同步）
+SLOWMO_TIME = 1.0     # 回合結束時最後一擊的慢動作長度（現實秒數）
+SLOWMO_SCALE = 0.3    # 慢動作速度倍率
+END_TIME = 3.6        # 回合結束畫面總長（含慢動作）
+
 # ---------------- 武器
 WEAPONS = {
     "pistol": dict(name="USP-S 手槍", dmg=34, rate=0.17, mag=12, res=48, reload=1.6, spread=0.012,

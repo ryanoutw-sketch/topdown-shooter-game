@@ -25,6 +25,7 @@ class View(WorldDrawMixin, HudMixin, MenuMixin):
         self.dark = pygame.Surface((SW, SH), pygame.SRCALPHA)
         self.holes = {int(w["view"] * ZOOM): self.make_hole(int(w["view"] * ZOOM)) for w in WEAPONS.values()}
         self.fog_r = {}  # 每個視野來源目前顯示的半徑（切槍時平滑變化）
+        self.pan_k = 1.0  # 回合開始鏡頭平移進度（anim.py 設定；1 = 正常跟隨）
         self.red = pygame.Surface((SW, SH), pygame.SRCALPHA)
         self.f_s, self.f_m, self.f_l, self.f_xl = font(18), font(24, True), font(40, True), font(64, True)
         self.cam = (0.0, 0.0)
@@ -55,6 +56,11 @@ class View(WorldDrawMixin, HudMixin, MenuMixin):
         cy = fyp - VH / 2 + ((mouse[1] - SH / 2) / ZOOM * 0.35 if aim else 0)
         cx = max(0, min(MW * TILE - VW, cx))
         cy = max(0, min(MH * TILE - VH, cy))
+        if self.pan_k < 1:  # 回合開始：鏡頭從地圖另一端（敵方那邊）掃過來
+            c0x = (MW * TILE - VW) - cx
+            c0y = (MH * TILE - VH) - cy
+            cx = c0x + (cx - c0x) * self.pan_k
+            cy = c0y + (cy - c0y) * self.pan_k
         if fx.shake > 0:
             cx += random.uniform(-fx.shake, fx.shake)
             cy += random.uniform(-fx.shake, fx.shake)

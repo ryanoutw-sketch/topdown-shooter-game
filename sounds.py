@@ -41,6 +41,31 @@ def synth_sounds():
             return (state["y"] * 2.5 + math.sin(math.tau * (40 + 50 * math.exp(-t * 5)) * t) * 0.8) * math.exp(-t * 3)
         return f
 
+    def tone(freqs, dur, decay, attack=0.004):
+        def f(t):
+            env = min(1.0, t / attack) * math.exp(-t * decay)
+            return sum(math.sin(math.tau * fr * t) for fr in freqs) / len(freqs) * env * 0.8
+        return f
+
+    def arpeggio(notes, seg, tail):
+        def f(t):
+            k = min(len(notes) - 1, int(t / seg))
+            lt = t - k * seg
+            fr = notes[k]
+            last = k == len(notes) - 1
+            return ((math.sin(math.tau * fr * t) + 0.35 * math.sin(math.tau * 2 * fr * t))
+                    * min(1.0, lt * 300) * math.exp(-lt * (tail if last else 9)) * 0.55)
+        return f
+
+    def whoosh_fn():
+        state = {"y": 0.0}
+
+        def f(t):
+            k = 0.02 + 0.5 * min(1.0, t / 0.45)
+            state["y"] += (rnd.uniform(-1, 1) - state["y"]) * k
+            return state["y"] * 2.2 * math.sin(math.pi * min(1.0, t / 0.6))
+        return f
+
     try:
         pygame.mixer.set_num_channels(40)
         return {
@@ -55,6 +80,15 @@ def synth_sounds():
             "smoke": mk(lambda t: rnd.uniform(-1, 1) * math.exp(-t * 2.5) * 0.5, 1.2, 0.35),
             "fire": mk(lambda t: rnd.uniform(-1, 1) * math.exp(-t * 1.5) * 0.6
                        + math.sin(math.tau * 70 * t) * math.exp(-t * 6) * 0.5, 1.0, 0.45),
+            # ---- 動畫用
+            "whoosh": mk(whoosh_fn(), 0.6, 0.35),
+            "impact": mk(boom_fn(), 0.9, 0.55),
+            "beep": mk(tone([880], 0.14, 14), 0.14, 0.35),
+            "go": mk(tone([880, 1320], 0.7, 4), 0.7, 0.45),
+            "round_win": mk(arpeggio([523, 659, 784], 0.09, 4), 0.9, 0.45),
+            "round_lose": mk(arpeggio([392, 330, 262], 0.12, 3), 1.0, 0.45),
+            "fanfare": mk(arpeggio([523, 659, 784, 1047], 0.12, 2.5), 1.6, 0.5),
+            "defeat": mk(arpeggio([440, 415, 392, 330], 0.2, 1.8), 1.8, 0.45),
         }
     except pygame.error:
         return {}

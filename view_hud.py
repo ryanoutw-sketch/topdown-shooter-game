@@ -49,8 +49,8 @@ class HudMixin:
         alive = sum(1 for u in foes if u.alive)
         for i in range(len(foes)):
             pygame.draw.circle(s, team_col(enemy) if i < alive else (70, 70, 70), (bx + (i - (len(foes) - 1) / 2) * 18, 72), 6)
-        side_txt = "" if S["mode"] == "coop" else f"  ·  你是{TEAM_NAMES[team]}"
-        self.text(f"第 {S['round']} 回合  ·  先拿 {WIN_ROUNDS} 回合獲勝{side_txt}", self.f_s, (220, 220, 220), (bx, 92), "center")
+        side_txt = "" if S["mode"] == "coop" else f"  ·  Your team: {TEAM_NAMES[team]}"
+        self.text(f"Round {S['round']}  ·  First to {WIN_ROUNDS} wins{side_txt}", self.f_s, (220, 220, 220), (bx, 92), "center")
 
         # 擊殺紀錄
         y = 14
@@ -66,10 +66,10 @@ class HudMixin:
             y += 32
 
         if p is None:
-            self.text("觀戰中 — 下回合加入", self.f_m, (240, 240, 240), (SW // 2, SH - 40), "center")
+            self.text("Spectating — you'll join next round", self.f_m, (240, 240, 240), (SW // 2, SH - 40), "center")
         elif not p.alive:
-            who = f"觀看 {focus.name}" if focus and focus is not p and focus.alive else "等待回合結束"
-            self.text(f"你已陣亡 — {who}", self.f_m, (240, 240, 240), (SW // 2, SH - 40), "center")
+            who = f"watching {focus.name}" if focus and focus is not p and focus.alive else "waiting for the round to end"
+            self.text(f"You died — {who}", self.f_m, (240, 240, 240), (SW // 2, SH - 40), "center")
         else:
             self.draw_player_hud(p, fx, mouse)
 
@@ -79,14 +79,14 @@ class HudMixin:
         pygame.draw.rect(s, (20, 20, 25), (14, SH - 64, 230, 50), border_radius=8)
         self.text("+", self.f_l, (90, 230, 120) if p.regen else (240, 240, 240), (36, SH - 39), "center")
         if p.regen:
-            self.text("回血中", self.f_s, (90, 230, 120), (130, SH - 66), "midleft")
+            self.text("Regenerating", self.f_s, (90, 230, 120), (130, SH - 66), "midleft")
         self.text(str(int(math.ceil(p.hp))), self.f_l, (240, 240, 240) if p.hp > 30 else (255, 70, 70), (60, SH - 39), "midleft")
         pygame.draw.rect(s, (60, 60, 60), (130, SH - 44, 100, 10))
         pygame.draw.rect(s, (90, 220, 110) if p.hp > 30 else (240, 70, 60), (130, SH - 44, p.hp, 10))
 
         labels = {"primary": WEAPONS[p.primary]["name"], "pistol": WEAPONS["pistol"]["name"],
-                  "he": f"高爆 x{p.nades['he']}", "smoke": f"煙霧 x{p.nades['smoke']}",
-                  "molotov": f"燃燒 x{p.nades['molotov']}"}
+                  "he": f"HE x{p.nades['he']}", "smoke": f"Smoke x{p.nades['smoke']}",
+                  "molotov": f"Molotov x{p.nades['molotov']}"}
         x = SW // 2 - 330
         for i, sl in enumerate(SLOTS):
             sel = sl == p.slot
@@ -106,7 +106,7 @@ class HudMixin:
             if p.rl > 0:
                 pygame.draw.rect(s, (60, 60, 60), (SW - 222, SH - 20, 200, 4))
                 pygame.draw.rect(s, (240, 200, 80), (SW - 222, SH - 20, 200 * (1 - p.rl), 4))
-                self.text("換彈中…", self.f_m, (240, 200, 80), (SW // 2, SH // 2 + 60), "center")
+                self.text("Reloading…", self.f_m, (240, 200, 80), (SW // 2, SH // 2 + 60), "center")
         else:
             self.text(NADE_NAMES[p.slot], self.f_m, (240, 240, 240), (SW - 122, SH - 39), "center")
 

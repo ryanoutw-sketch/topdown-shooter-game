@@ -181,8 +181,8 @@ class Animator:
 
         # 副標題與提示
         sub_a = clamp((t - 1.2) / 0.4)
-        self.text("雙  人  連  線  版", self.f_m, (225, 225, 235), (cx, cy + 62), sub_a)
-        self.text("按任意鍵跳過", self.f_s, (150, 150, 160), (cx, SH - 34), 0.4 + 0.3 * math.sin(t * 4), shadow=False)
+        self.text("2 - P L A Y E R   O N L I N E", self.f_m, (225, 225, 235), (cx, cy + 62), sub_a)
+        self.text("Press any key to skip", self.f_s, (150, 150, 160), (cx, SH - 34), 0.4 + 0.3 * math.sin(t * 4), shadow=False)
         if t >= INTRO_TIME:
             self.skip_intro()
 
@@ -247,11 +247,11 @@ class Animator:
                 pygame.draw.rect(self.s, col, (off, 270, SW, 4))
                 (a, b), _ = self.scores(S, me)
                 if S["mode"] == "coop":
-                    sub = f"防守方 · 擊退所有進攻方      比分 {a} : {b}"
+                    sub = f"Defenders · Hold off every attacker      Score {a} : {b}"
                 else:
-                    where = "上方出生" if team == "CT" else "下方出生"
-                    sub = f"你是{TEAM_NAMES[team]}（{where}）      比分 {a} : {b}"
-                self.text(f"第 {S['round']} 回合", self.f_big, (245, 245, 250), (SW / 2 + off, 170))
+                    where = "top spawn" if team == "CT" else "bottom spawn"
+                    sub = f"Your team: {TEAM_NAMES[team]} ({where})      Score {a} : {b}"
+                self.text(f"ROUND {S['round']}", self.f_big, (245, 245, 250), (SW / 2 + off, 170))
                 self.text(sub, self.f_m, col, (SW / 2 + off, 238))
             n = math.ceil(f)
             frac = 1 - (f - (n - 1))  # 這一秒的進度 0→1
@@ -262,8 +262,8 @@ class Animator:
             k = (self.t - self.go_t) / 0.9
             a = 1 - ease_in_cubic((k - 0.5) / 0.5)
             sc = 0.6 + 0.55 * ease_out_back(k * 2.2)
-            self.text("開始！", self.f_huge, (20, 14, 6), (SW / 2 + 5, SH / 2 + 115), a * 0.8, sc, shadow=False)
-            self.text("開始！", self.f_huge, (255, 228, 120), (SW / 2, SH / 2 + 110), a, sc)
+            self.text("GO!", self.f_huge, (20, 14, 6), (SW / 2 + 5, SH / 2 + 115), a * 0.8, sc, shadow=False)
+            self.text("GO!", self.f_huge, (255, 228, 120), (SW / 2, SH / 2 + 110), a, sc)
 
     # ---------------- 回合結束：電影黑邊 + 勝負橫幅 + 比分跳動
     def draw_end(self, S, me):
@@ -284,10 +284,10 @@ class Animator:
                 self.play("round_win" if S["rw"] == me else "round_lose")
         bt = self.t - self.banner_t
         if S["mode"] == "coop":
-            big = "防守方獲勝" if S["rw"] else "進攻方獲勝"
+            big = "Defenders win" if S["rw"] else "Attackers win"
             col = CT_COL if S["rw"] else T_COL
         else:
-            big = "平手" if S["rw"] < 0 else ("你贏了這回合" if S["rw"] == me else "對手贏了這回合")
+            big = "Draw" if S["rw"] < 0 else ("You won the round" if S["rw"] == me else "Opponent won the round")
             col = (230, 230, 230) if S["rw"] < 0 else (CT_COL if S["rw"] == me else T_COL)
         k = ease_out_cubic(bt / 0.45)
         w = int(SW * k)
@@ -342,14 +342,14 @@ class Animator:
                     c[1] + dx * math.sin(c[4] * 0.5) + dy * math.cos(c[4] * 0.5))
                    for dx, dy in ((-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2))]
             pygame.draw.polygon(s, c[6], pts)
-        self.text("勝利！" if won else "戰敗", self.f_big, CT_COL if won else T_COL, (SW / 2, 190),
+        self.text("VICTORY!" if won else "DEFEAT", self.f_big, CT_COL if won else T_COL, (SW / 2, 190),
                   1.0, max(0.01, ease_out_back(ot / 0.6)))
         (a, b), _ = self.scores(S, me)
-        self.text(f"最終比分  {a} : {b}", self.f_l, (230, 230, 230), (SW / 2, 290), clamp((ot - 0.4) / 0.4))
+        self.text(f"Final Score  {a} : {b}", self.f_l, (230, 230, 230), (SW / 2, 290), clamp((ot - 0.4) / 0.4))
         k = ease_out_cubic((ot - 0.7) / 1.0)
         for i, uid in enumerate(S["humans"]):
             kills, deaths = S["stats"][uid]
-            line = f"{S['names'][uid]}    擊殺 {round(kills * k)}   陣亡 {round(deaths * k)}"
+            line = f"{S['names'][uid]}    Kills {round(kills * k)}   Deaths {round(deaths * k)}"
             self.text(line, self.f_m, (210, 210, 215), (SW / 2, 360 + i * 42), clamp((ot - 0.6 - i * 0.15) / 0.3))
-        hint = "Enter 再來一場 · ESC 回大廳" if is_host else "等待主機決定是否再來一場…"
+        hint = "Enter Play again · ESC Lobby" if is_host else "Waiting for the host to start a rematch…"
         self.text(hint, self.f_m, (200, 200, 205), (SW / 2, 520), clamp((ot - 1.6) / 0.4) * (0.7 + 0.3 * math.sin(self.t * 3)))

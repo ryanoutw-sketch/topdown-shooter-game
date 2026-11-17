@@ -155,7 +155,7 @@ class Screen:
             an.draw_intro(w)
             return
         if S is None:
-            v.message(["連線中…"])
+            v.message(["Connecting…"])
             an.draw_iris()
             return
         an.update(S)

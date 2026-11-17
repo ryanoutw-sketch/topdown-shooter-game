@@ -146,7 +146,7 @@ class Screen:
         S = w.s
         self.rects = []
         if S is None:
-            v.message(["連線中…"])
+            v.message(["Connecting…"])
             return
         st = S["st"]
         pygame.mouse.set_visible(st not in ("live", "end"))

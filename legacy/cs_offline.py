@@ -65,27 +65,27 @@ ROUTES = [
 
 # ------------------------------------------------------------------ 武器
 WEAPONS = {
-    "pistol": dict(name="USP-S 手槍", dmg=34, rate=0.17, mag=12, res=48, reload=1.6, spread=0.012,
+    "pistol": dict(name="USP-S Pistol", dmg=34, rate=0.17, mag=12, res=48, reload=1.6, spread=0.012,
                    move=0.05, recoil=0.03, speed=245, pellets=1, range=1400, auto=False, snd="shot", length=14),
-    "smg": dict(name="MP7 衝鋒槍", dmg=24, rate=0.075, mag=30, res=120, reload=2.0, spread=0.03,
+    "smg": dict(name="MP7 SMG", dmg=24, rate=0.075, mag=30, res=120, reload=2.0, spread=0.03,
                 move=0.035, recoil=0.012, speed=238, pellets=1, range=1200, auto=True, snd="shot", length=18),
-    "m4": dict(name="M4A4 步槍", dmg=32, rate=0.092, mag=30, res=90, reload=2.4, spread=0.007,
+    "m4": dict(name="M4A4 Rifle", dmg=32, rate=0.092, mag=30, res=90, reload=2.4, spread=0.007,
                move=0.10, recoil=0.017, speed=218, pellets=1, range=2200, auto=True, snd="rifle", length=22),
-    "ak": dict(name="AK-47 步槍", dmg=38, rate=0.1, mag=30, res=90, reload=2.5, spread=0.009,
+    "ak": dict(name="AK-47 Rifle", dmg=38, rate=0.1, mag=30, res=90, reload=2.5, spread=0.009,
                move=0.12, recoil=0.025, speed=212, pellets=1, range=2200, auto=True, snd="rifle", length=22),
-    "shotgun": dict(name="Nova 霰彈槍", dmg=17, rate=0.85, mag=8, res=32, reload=2.8, spread=0.10,
+    "shotgun": dict(name="Nova Shotgun", dmg=17, rate=0.85, mag=8, res=32, reload=2.8, spread=0.10,
                     move=0.03, recoil=0.0, speed=222, pellets=9, range=650, auto=False, snd="shotgun", length=20),
-    "awp": dict(name="AWP 狙擊槍", dmg=115, rate=1.45, mag=5, res=30, reload=3.6, spread=0.0015,
+    "awp": dict(name="AWP Sniper", dmg=115, rate=1.45, mag=5, res=30, reload=3.6, spread=0.0015,
                 move=0.28, recoil=0.0, speed=185, pellets=1, range=2800, auto=False, snd="awp", length=28),
 }
 PRIMARIES = ["smg", "m4", "ak", "shotgun", "awp"]
-NADE_NAMES = {"he": "高爆手榴彈", "smoke": "煙霧彈", "molotov": "燃燒彈"}
+NADE_NAMES = {"he": "HE Grenade", "smoke": "Smoke Grenade", "molotov": "Molotov"}
 SLOTS = ["primary", "pistol", "he", "smoke", "molotov"]
 
 DIFFS = {
-    1: dict(name="簡單", bots=3, react=(0.6, 1.0), err=0.06, turn=4.0, burst=(3, 5)),
-    2: dict(name="普通", bots=5, react=(0.35, 0.65), err=0.035, turn=6.0, burst=(4, 7)),
-    3: dict(name="困難", bots=5, react=(0.18, 0.38), err=0.017, turn=9.0, burst=(5, 9)),
+    1: dict(name="Easy", bots=3, react=(0.6, 1.0), err=0.06, turn=4.0, burst=(3, 5)),
+    2: dict(name="Normal", bots=5, react=(0.35, 0.65), err=0.035, turn=6.0, burst=(4, 7)),
+    3: dict(name="Hard", bots=5, react=(0.18, 0.38), err=0.017, turn=9.0, burst=(5, 9)),
 }
 BOT_NAMES = ["Gus", "Kilo", "Raven", "Vex", "Bishop", "Nomad", "Sable"]
 
@@ -349,7 +349,7 @@ class Game:
         self.primary = primary
         self.round += 1
         cx, cy = tile_center((29, 3))
-        self.player = Unit(cx, cy, "CT", primary, False, "你")
+        self.player = Unit(cx, cy, "CT", primary, False, "You")
         self.units = [self.player]
         spots = random.sample(self.free_tiles(T_SPAWN), self.D["bots"])
         routes = random.sample(ROUTES, len(ROUTES))
@@ -537,7 +537,7 @@ class Game:
         for u in self.units:
             d = math.hypot(u.x - n.x, u.y - n.y)
             if u.alive and d < RAD and self.los(n.x, n.y, u.x, u.y, smoke=False):
-                self.damage(u, 98 * (1 - d / RAD), n.owner, "高爆手榴彈")
+                self.damage(u, 98 * (1 - d / RAD), n.owner, "HE Grenade")
         for _ in range(45):
             self.spark(n.x, n.y, random.choice([(255, 180, 60), (255, 230, 120), (90, 80, 70)]), 420, 0.6, 8)
         self.parts.append([n.x, n.y, 0, 0, 0.12, 0.12, (255, 240, 200), 70])
@@ -554,7 +554,7 @@ class Game:
             f.age += dt
             for u in self.units:
                 if u.alive and math.hypot(u.x - f.x, u.y - f.y) < f.RAD and self.los(f.x, f.y, u.x, u.y, smoke=False):
-                    self.damage(u, f.DPS * dt, f.owner, "燃燒彈")
+                    self.damage(u, f.DPS * dt, f.owner, "Molotov")
             if random.random() < dt * 25 and f.points:
                 px, py, _ = random.choice(f.points)
                 self.parts.append([px, py, random.uniform(-15, 15), -random.uniform(20, 60), 0.6, 0.6, (90, 80, 75), 9])
@@ -820,11 +820,11 @@ class Game:
         self.update_nades(dt)
         bots_alive = sum(1 for u in self.units if u.bot and u.alive)
         if not self.player.alive:
-            self.end_round(False, "你陣亡了 — 進攻方獲勝")
+            self.end_round(False, "You died — Attackers win")
         elif bots_alive == 0:
-            self.end_round(True, "敵人全數殲滅 — 防守方獲勝")
+            self.end_round(True, "All enemies eliminated — Defenders win")
         elif self.timer <= 0:
-            self.end_round(True, "時間到 — 防守方守住了")
+            self.end_round(True, "Time's up — Defenders held")
 
 
 # ------------------------------------------------------------------ 繪圖
@@ -967,7 +967,7 @@ class View:
         nb = sum(1 for u in g.units if u.bot)
         for i in range(nb):
             pygame.draw.circle(s, T_COL if i < alive else (70, 70, 70), (bx + (i - (nb - 1) / 2) * 18, 72), 6)
-        self.text(f"第 {g.round} 回合  ·  先拿 {WIN_ROUNDS} 回合獲勝", self.f_s, (220, 220, 220), (bx, 92), "center")
+        self.text(f"Round {g.round}  ·  First to {WIN_ROUNDS} wins", self.f_s, (220, 220, 220), (bx, 92), "center")
 
         # 擊殺紀錄
         y = 14
@@ -992,8 +992,8 @@ class View:
 
         # 武器欄
         labels = {"primary": WEAPONS[p.guns["primary"]]["name"], "pistol": WEAPONS["pistol"]["name"],
-                  "he": f"高爆 x{p.nades['he']}", "smoke": f"煙霧 x{p.nades['smoke']}",
-                  "molotov": f"燃燒 x{p.nades['molotov']}"}
+                  "he": f"HE x{p.nades['he']}", "smoke": f"Smoke x{p.nades['smoke']}",
+                  "molotov": f"Molotov x{p.nades['molotov']}"}
         x = SW // 2 - 330
         for i, sl in enumerate(SLOTS):
             sel = sl == p.slot
@@ -1016,7 +1016,7 @@ class View:
                 frac = 1 - p.reload_t / w["reload"]
                 pygame.draw.rect(s, (60, 60, 60), (SW - 222, SH - 20, 200, 4))
                 pygame.draw.rect(s, (240, 200, 80), (SW - 222, SH - 20, 200 * frac, 4))
-                self.text("換彈中…", self.f_m, (240, 200, 80), (SW // 2, SH // 2 + 60), "center")
+                self.text("Reloading…", self.f_m, (240, 200, 80), (SW // 2, SH // 2 + 60), "center")
         else:
             self.text(NADE_NAMES[p.slot], self.f_m, (240, 240, 240), (SW - 122, SH - 39), "center")
 
@@ -1048,8 +1048,8 @@ class View:
         ov = pygame.Surface((SW, SH), pygame.SRCALPHA)
         ov.fill((10, 12, 18, 215))
         s.blit(ov, (0, 0))
-        self.text(f"第 {g.round + 1} 回合 — 選擇主武器", self.f_xl, (240, 240, 240), (SW // 2, 70), "center")
-        self.text(f"比分  你 {g.score[0]} : {g.score[1]} NPC      擊殺 {g.kills}  陣亡 {g.deaths}",
+        self.text(f"Round {g.round + 1} — Choose Your Primary", self.f_xl, (240, 240, 240), (SW // 2, 70), "center")
+        self.text(f"Score  You {g.score[0]} : {g.score[1]} NPC      Kills {g.kills}  Deaths {g.deaths}",
                   self.f_m, (200, 200, 200), (SW // 2, 130), "center")
         rects = []
         for i, key in enumerate(PRIMARIES):
@@ -1061,8 +1061,8 @@ class View:
                 pygame.draw.rect(s, (230, 200, 90), r, 2, border_radius=10)
             self.text(f"{i + 1}", self.f_l, (230, 200, 90), (r.x + 36, r.centery), "center")
             self.text(w["name"], self.f_m, (240, 240, 240), (r.x + 70, r.centery), "midleft")
-            stats = [("傷害", min(1.0, w["dmg"] * w["pellets"] / 120)), ("射速", min(1.0, 0.07 / w["rate"])),
-                     ("精準", 1 - min(1.0, (w["spread"] + w["move"] * 0.3) / 0.11)), ("機動", (w["speed"] - 170) / 80)]
+            stats = [("Dmg", min(1.0, w["dmg"] * w["pellets"] / 120)), ("Rate", min(1.0, 0.07 / w["rate"])),
+                     ("Aim", 1 - min(1.0, (w["spread"] + w["move"] * 0.3) / 0.11)), ("Move", (w["speed"] - 170) / 80)]
             sx = r.x + 330
             for name, v in stats:
                 self.text(name, self.f_s, (180, 180, 180), (sx, r.centery), "midleft", shadow=False)
@@ -1070,7 +1070,7 @@ class View:
                 pygame.draw.rect(s, (110, 200, 120), (sx + 44, r.centery - 5, 80 * max(0.05, v), 10))
                 sx += 130
             rects.append(r)
-        self.text("每回合附帶：USP-S 手槍、高爆手榴彈、煙霧彈、燃燒彈 各一    按 1–5 或點擊選擇",
+        self.text("Every round includes: USP-S, HE Grenade, Smoke Grenade, Molotov    Press 1–5 or click",
                   self.f_s, (200, 200, 200), (SW // 2, SH - 40), "center")
         return rects
 
@@ -1079,18 +1079,18 @@ def main_menu(view, mouse, diff):
     s = view.s
     s.fill((22, 20, 18))
     view.text("2D TOP DOWN SHOOTING GAME", view.f_xl, (230, 190, 90), (SW // 2, 110), "center")
-    view.text("單機版 · 與 NPC 對戰", view.f_m, (220, 220, 220), (SW // 2, 170), "center")
+    view.text("Single-player · vs NPCs", view.f_m, (220, 220, 220), (SW // 2, 170), "center")
     rects = []
     for i, k in enumerate((1, 2, 3)):
         d = DIFFS[k]
         r = pygame.Rect(SW // 2 - 220, 230 + i * 80, 440, 64)
         hover = r.collidepoint(mouse)
         pygame.draw.rect(s, (60, 66, 84) if hover or k == diff else (34, 36, 44), r, border_radius=10)
-        view.text(f"{k}  {d['name']}  ({d['bots']} 個敵人)", view.f_m, (240, 240, 240), r.center, "center")
+        view.text(f"{k}  {d['name']}  ({d['bots']} enemies)", view.f_m, (240, 240, 240), r.center, "center")
         rects.append((r, k))
-    lines = ["WASD 移動 · Shift 靜步 · 滑鼠瞄準 · 左鍵射擊/投擲 · R 換彈",
-             "1 主武器 · 2 手槍 · 3 高爆 · 4 煙霧 · 5 燃燒 · 滾輪切換 · Q 上一把",
-             "煙霧會擋住雙方視線，也能撲滅火焰 · 移動中射擊會變不準"]
+    lines = ["WASD Move · Shift Walk · Mouse Aim · Left-click Shoot/Throw · R Reload",
+             "1 Primary · 2 Pistol · 3 HE · 4 Smoke · 5 Molotov · Wheel Switch · Q Last weapon",
+             "Smoke blocks vision for both sides and puts out fire · Shooting while moving is less accurate"]
     for i, ln in enumerate(lines):
         view.text(ln, view.f_s, (190, 190, 190), (SW // 2, 500 + i * 30), "center")
     return rects
@@ -1101,7 +1101,7 @@ def main():
     pygame.mixer.pre_init(22050, -16, 2, 256)
     pygame.init()
     screen = pygame.display.set_mode((SW, SH))
-    pygame.display.set_caption("2D Top Down Shooting Game — 單機版")
+    pygame.display.set_caption("2D Top Down Shooting Game — Single-player")
     pygame.key.stop_text_input()  # 關閉輸入法（注音/IME 開著時 WASD 會被吃掉或卡住）
     clock = pygame.time.Clock()
     assets = {"sounds": synth_sounds()}
@@ -1164,10 +1164,10 @@ def main():
                 pygame.mouse.set_visible(True)
                 screen.fill((15, 15, 18))
                 won = game.score[0] >= WIN_ROUNDS
-                view.text("勝利！" if won else "戰敗", view.f_xl, CT_COL if won else T_COL, (SW // 2, 220), "center")
-                view.text(f"最終比分  {game.score[0]} : {game.score[1]}", view.f_l, (230, 230, 230), (SW // 2, 320), "center")
-                view.text(f"擊殺 {game.kills}   陣亡 {game.deaths}", view.f_m, (200, 200, 200), (SW // 2, 380), "center")
-                view.text("按 Enter 再來一場 · ESC 回主選單", view.f_m, (200, 200, 200), (SW // 2, 470), "center")
+                view.text("VICTORY!" if won else "DEFEAT", view.f_xl, CT_COL if won else T_COL, (SW // 2, 220), "center")
+                view.text(f"Final Score  {game.score[0]} : {game.score[1]}", view.f_l, (230, 230, 230), (SW // 2, 320), "center")
+                view.text(f"Kills {game.kills}   Deaths {game.deaths}", view.f_m, (200, 200, 200), (SW // 2, 380), "center")
+                view.text("Enter Play again · ESC Main menu", view.f_m, (200, 200, 200), (SW // 2, 470), "center")
                 if pygame.K_RETURN in keys_down:
                     game = Game(diff, assets)
             else:

@@ -31,7 +31,7 @@ from utils import local_ip
 
 
 def run_host(port, name):
-    screen, clock, sounds = setup("2D Top Down Shooting Game — 主機")
+    screen, clock, sounds = setup("2D Top Down Shooting Game — Host")
     game = Game()
     game.names[0] = name or "P1"
     ui = Screen(screen, sounds, 0)
@@ -76,9 +76,9 @@ def run_host(port, name):
         if not connected and 1 in game.humans:
             game.drop_player(1)
             if game.mode == "pvp" and game.state != "lobby":
-                game.to_lobby("玩家 2 斷線了")
+                game.to_lobby("Player 2 disconnected")
             else:
-                game.notice = "玩家 2 斷線了"
+                game.notice = "Player 2 disconnected"
         r_inp = None
         if connected:
             got, agg = False, {"click": False, "cmds": []}
@@ -119,7 +119,7 @@ def run_host(port, name):
                     game.diff = val
                 elif kind == "start":
                     if game.mode == "pvp" and not connected:
-                        game.notice = "對戰模式需要玩家 2 連線"
+                        game.notice = "Versus mode needs Player 2 to connect"
                     else:
                         game.begin_match()
         elif st == "over" and any(k in (pygame.K_RETURN, pygame.K_KP_ENTER) for k in keys_down):
@@ -145,11 +145,11 @@ def run_client(host, port, name):
     try:
         sock = socket.create_connection((host, port), timeout=5)
     except OSError as e:
-        print(f"連不上 {host}:{port} → {e}\n請確認主機已執行 --host，且防火牆允許 TCP {port}")
+        print(f"Cannot connect to {host}:{port} → {e}\nMake sure the host is running --host and the firewall allows TCP {port}")
         return
     net = Net(sock)
     net.send({"t": "hello", "name": name or "P2"})
-    screen, clock, sounds = setup("2D Top Down Shooting Game — 加入者")
+    screen, clock, sounds = setup("2D Top Down Shooting Game — Client")
     ui = Screen(screen, sounds, 1)
 
     while True:
@@ -160,7 +160,7 @@ def run_client(host, port, name):
         mouse = pygame.mouse.get_pos()
         if not net.alive:
             pygame.mouse.set_visible(True)
-            ui.view.message(["與主機的連線中斷了", "按 ESC 離開"])
+            ui.view.message(["Disconnected from host", "Press ESC to quit"])
             pygame.display.flip()
             continue
         ui.feed(net.drain())
@@ -175,12 +175,12 @@ def run_client(host, port, name):
 
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description="2D Top Down Shooting Game 雙人連線版")
+    ap = argparse.ArgumentParser(description="2D Top Down Shooting Game — 2-player online")
     g = ap.add_mutually_exclusive_group(required=True)
-    g.add_argument("--host", action="store_true", help="建立遊戲（主機）")
-    g.add_argument("--join", metavar="IP", help="加入主機的 IP")
+    g.add_argument("--host", action="store_true", help="host a game")
+    g.add_argument("--join", metavar="IP", help="IP address of the host to join")
     ap.add_argument("--port", type=int, default=PORT)
-    ap.add_argument("--name", default="", help="顯示名稱")
+    ap.add_argument("--name", default="", help="display name")
     args = ap.parse_args()
     if args.host:
         run_host(args.port, args.name)

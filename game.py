@@ -104,18 +104,18 @@ class Game(BotMixin, MapGrid):
         if self.mode == "coop":
             bots = sum(1 for u in self.units if u.bot and u.alive)
             if not alive_h:
-                self.end_round(False, "防守方全滅")
+                self.end_round(False, "Defenders eliminated")
             elif bots == 0:
-                self.end_round(True, "敵人全數殲滅")
+                self.end_round(True, "All attackers eliminated")
             elif self.timer <= 0:
-                self.end_round(True, "時間到，守住了")
+                self.end_round(True, "Time's up — Defenders held")
         else:
             if len(alive_h) == 1:
-                self.end_round(alive_h[0].uid, "擊倒對手")
+                self.end_round(alive_h[0].uid, "Opponent eliminated")
             elif not alive_h:
-                self.end_round(-1, "同歸於盡")
+                self.end_round(-1, "Both players down")
             elif self.timer <= 0:
-                self.end_round(-1, "時間到")
+                self.end_round(-1, "Time's up")
 
     def drop_player(self, uid):
         if uid in self.humans:
@@ -268,7 +268,7 @@ class Game(BotMixin, MapGrid):
         for u in self.units:
             d = math.hypot(u.x - n.x, u.y - n.y)
             if u.alive and d < RAD and self.los(n.x, n.y, u.x, u.y, smoke=False):
-                self.damage(u, 98 * (1 - d / RAD), n.owner, "高爆手榴彈")
+                self.damage(u, 98 * (1 - d / RAD), n.owner, "HE Grenade")
         self.ev("boom", round(n.x), round(n.y))
 
     def update_world(self, dt):
@@ -279,7 +279,7 @@ class Game(BotMixin, MapGrid):
             f.age += dt
             for u in self.units:
                 if u.alive and math.hypot(u.x - f.x, u.y - f.y) < f.RAD and self.los(f.x, f.y, u.x, u.y, smoke=False):
-                    self.damage(u, f.DPS * dt, f.owner, "燃燒彈", marker=False)
+                    self.damage(u, f.DPS * dt, f.owner, "Molotov", marker=False)
         self.fires = [f for f in self.fires if f.age < f.DUR]
         self.fire_tiles = {(int(px // TILE), int(py // TILE)) for f in self.fires for px, py, _ in f.points}
         for f in self.feed:

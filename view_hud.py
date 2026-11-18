@@ -6,7 +6,7 @@ import math
 import pygame
 
 from config import SW, SH, MW, MH, TILE, ZOOM, WIN_ROUNDS, WEAPONS, SLOTS, NADES, NADE_NAMES, TEAM_NAMES
-from utils import team_col
+from utils import team_col, text_surface
 
 
 class HudMixin:
@@ -19,7 +19,7 @@ class HudMixin:
         vs = self.viewers(w, me)
         if fx.hurt > 0:
             self.red.fill((200, 0, 0, int(90 * fx.hurt)))
-            s.blit(self.red, (0, 0))
+            s.blit(self.red, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
 
         # 小地圖
         s.blit(w.mini, (12, 12))
@@ -55,13 +55,13 @@ class HudMixin:
         # 擊殺紀錄
         y = 14
         for kn, kt, wn, vn, vt, life in reversed(S["feed"]):
-            imgs = [self.f_s.render(kn, True, team_col(kt)), self.f_s.render(f"  [{wn}]  ", True, (230, 230, 230)),
-                    self.f_s.render(vn, True, team_col(vt))]
+            imgs = [text_surface(self.f_s, kn, team_col(kt)), text_surface(self.f_s, f"  [{wn}]  ", (230, 230, 230)),
+                    text_surface(self.f_s, vn, team_col(vt))]
             wsum = sum(i.get_width() for i in imgs)
             x = SW - 14 - wsum
             pygame.draw.rect(s, (0, 0, 0), (x - 8, y - 3, wsum + 16, 28), border_radius=5)
             for i in imgs:
-                s.blit(i, (x, y))
+                s.blit(i, (x, y), special_flags=pygame.BLEND_ALPHA_SDL2)
                 x += i.get_width()
             y += 32
 

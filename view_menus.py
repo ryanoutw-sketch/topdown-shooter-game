@@ -62,11 +62,12 @@ class MenuMixin:
         s, S = self.s, w.s
         bg = getattr(self, "_buy_bg", None)
         if bg is None:  # 背景（縮小的地圖＋暗色遮罩）只畫一次，之後重複使用
-            bg = pygame.Surface((SW, SH))
+            bg = pygame.Surface((SW, SH), 0, 32, (16711680, 65280, 255, 0))
+            bg.fill((10, 12, 18))
             bg.blit(pygame.transform.smoothscale(w.map_surf, (SW, int(SW * MH / MW))), (0, -100))
             ov = pygame.Surface((SW, SH), pygame.SRCALPHA)
             ov.fill((10, 12, 18, 215))
-            bg.blit(ov, (0, 0))
+            bg.blit(ov, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
             self._buy_bg = bg
         s.blit(bg, (0, 0))
         team = S["side"][me]
@@ -90,13 +91,18 @@ class MenuMixin:
             stats = [("Dmg", min(1.0, wp["dmg"] * wp["pellets"] / 120)), ("Rate", min(1.0, 0.07 / wp["rate"])),
                      ("Aim", 1 - min(1.0, (wp["spread"] + wp["move"] * 0.3) / 0.11)), ("Move", (wp["speed"] - 170) / 80),
                      ("View", (wp["view"] - 380) / 480)]
-            sx = r.x + 270
+            # stats 起點：武器名結束後至少留 16px，且不低於固定欄位寬度。
+            # 每一組的血條都接在實際文字寬度後面，避免固定間距蓋住標籤。
+            name_end = r.x + 70 + self.f_m.size(wp["name"])[0]
+            sx = max(r.x + 270, name_end + 16)
+            bar_w = 54
             for name, v in stats:
-                self.text(name, self.f_s, (180, 180, 180), (sx, r.centery), "midleft", shadow=False)
-                pygame.draw.rect(s, (60, 60, 70), (sx + 42, r.centery - 5, 66, 10))
+                label = self.text(name, self.f_s, (180, 180, 180), (sx, r.centery), "midleft", shadow=False)
+                bar_x = label.right + 6
+                pygame.draw.rect(s, (60, 60, 70), (bar_x, r.centery - 5, bar_w, 10))
                 pygame.draw.rect(s, (110, 200, 120) if name != "View" else (110, 170, 240),
-                                 (sx + 42, r.centery - 5, 66 * max(0.05, min(1.0, v)), 10))
-                sx += 114
+                                 (bar_x, r.centery - 5, bar_w * max(0.05, min(1.0, v)), 10))
+                sx = bar_x + bar_w + 6
             rects.append(r)
         status = []
         for uid in S["humans"]:

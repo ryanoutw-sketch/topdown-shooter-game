@@ -11,7 +11,7 @@ import random
 import pygame
 
 from config import SW, SH, WIN_ROUNDS, INTRO_TIME, IRIS_TIME, FREEZE_TIME, CT_COL, T_COL, TEAM_NAMES
-from utils import font, team_col
+from utils import font, team_col, text_surface
 
 GOLD = (240, 200, 90)
 INK = (8, 8, 12)
@@ -77,8 +77,8 @@ class Animator:
     def text(self, txt, fnt, col, center, alpha=1.0, scale=1.0, shadow=True):
         if alpha <= 0.01 or scale <= 0.01:
             return
-        img = fnt.render(txt, True, col)
-        sh = fnt.render(txt, True, (0, 0, 0)) if shadow else None
+        img = text_surface(fnt, txt, col)
+        sh = text_surface(fnt, txt, (0, 0, 0)) if shadow else None
         if scale != 1.0:
             size = (max(1, int(img.get_width() * scale)), max(1, int(img.get_height() * scale)))
             img = pygame.transform.smoothscale(img, size)
@@ -89,8 +89,8 @@ class Animator:
                 sh.set_alpha(int(200 * alpha))
         r = img.get_rect(center=(int(center[0]), int(center[1])))
         if sh:
-            self.s.blit(sh, r.move(3, 3))
-        self.s.blit(img, r)
+            self.s.blit(sh, r.move(3, 3), special_flags=pygame.BLEND_ALPHA_SDL2)
+        self.s.blit(img, r, special_flags=pygame.BLEND_ALPHA_SDL2)
 
     # ---------------- 圓形收合轉場
     def start_iris(self):
@@ -114,7 +114,7 @@ class Animator:
         ov.fill((*INK, 255))
         if r > 1:
             pygame.draw.circle(ov, (0, 0, 0, 0), (SW // 2, SH // 2), int(r))
-        self.s.blit(ov, (0, 0))
+        self.s.blit(ov, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
         if 3 < r < R0 - 4:
             pygame.draw.circle(self.s, GOLD, (SW // 2, SH // 2), int(r), 3)
 
@@ -131,10 +131,10 @@ class Animator:
         px = 300 + t * 45
         s.blit(world.map_surf, (0, 0), (px, 260 + t * 12, SW, SH))
         self.overlay.fill((*INK, 205))
-        s.blit(self.overlay, (0, 0))
+        s.blit(self.overlay, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
 
         cx, cy = SW // 2, SH // 2 - 30
-        title = self.f_title.render("2D TOP DOWN SHOOTING GAME", True, GOLD)
+        title = text_surface(self.f_title, "2D TOP DOWN SHOOTING GAME", GOLD)
         tw, th = title.get_size()
         tx, ty = cx - tw // 2, cy - th // 2
 
@@ -150,7 +150,7 @@ class Animator:
             p1 = (cx + math.cos(ang) * (rr - 18), cy + math.sin(ang) * (rr - 18))
             p2 = (cx + math.cos(ang) * (rr + 22), cy + math.sin(ang) * (rr + 22))
             pygame.draw.line(self.overlay, ring, p1, p2, 3)
-        s.blit(self.overlay, (0, 0))
+        s.blit(self.overlay, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
 
         # 彈道從左射到右，經過的地方「劃開」出標題
         hx = -120 + (SW + 400) * ease_out_cubic((t - 0.35) / 0.75)
@@ -159,9 +159,9 @@ class Animator:
             self.play("whoosh")
         reveal = int(clamp(hx - tx, 0, tw))
         if reveal > 0:
-            sh = self.f_title.render("2D TOP DOWN SHOOTING GAME", True, (0, 0, 0))
-            s.blit(sh, (tx + 4, ty + 4), (0, 0, reveal, th))
-            s.blit(title, (tx, ty), (0, 0, reveal, th))
+            sh = text_surface(self.f_title, "2D TOP DOWN SHOOTING GAME", (0, 0, 0))
+            s.blit(sh, (tx + 4, ty + 4), (0, 0, reveal, th), special_flags=pygame.BLEND_ALPHA_SDL2)
+            s.blit(title, (tx, ty), (0, 0, reveal, th), special_flags=pygame.BLEND_ALPHA_SDL2)
         if -100 < hx < SW + 300 and t < 1.3:
             for i in range(12):
                 seg = 26
@@ -177,7 +177,7 @@ class Animator:
         flash = 1 - clamp((t - done_t) / 0.35)
         if t > done_t and flash > 0:
             self.overlay.fill((255, 245, 220, int(120 * flash)))
-            s.blit(self.overlay, (0, 0))
+            s.blit(self.overlay, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
 
         # 副標題與提示
         sub_a = clamp((t - 1.2) / 0.4)
@@ -242,7 +242,7 @@ class Animator:
                 team = S["side"][me]
                 col = team_col(team)
                 self.band.fill((10, 10, 16, 200))
-                self.s.blit(self.band, (off, 104), (0, 0, SW, 170))
+                self.s.blit(self.band, (off, 104), (0, 0, SW, 170), special_flags=pygame.BLEND_ALPHA_SDL2)
                 pygame.draw.rect(self.s, col, (off, 104, SW, 4))
                 pygame.draw.rect(self.s, col, (off, 270, SW, 4))
                 (a, b), _ = self.scores(S, me)
@@ -293,7 +293,7 @@ class Animator:
         w = int(SW * k)
         y0 = SH // 2 - 125
         self.band.fill((10, 10, 16, 220))
-        s.blit(self.band, (0, y0), (0, 0, w, 230))
+        s.blit(self.band, (0, y0), (0, 0, w, 230), special_flags=pygame.BLEND_ALPHA_SDL2)
         pygame.draw.rect(s, col, (0, y0, w, 4))
         pygame.draw.rect(s, col, (SW - w, y0 + 226, w, 4))
         ta = clamp((bt - 0.15) / 0.3)

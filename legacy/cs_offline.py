@@ -94,9 +94,13 @@ T_COL = (225, 140, 55)
 
 
 def font(size, bold=False):
-    return pygame.font.SysFont(
-        "microsoftjhenghei,microsoftjhengheiui,microsoftyahei,pmingliu,notosanscjktc,notosanscjksc,"
-        "notosanscjk,wenquanyizenhei,arialunicodems,arial", size, bold=bold)
+    try:
+        return pygame.font.SysFont(
+            "microsoftjhenghei,microsoftjhengheiui,microsoftyahei,pmingliu,hiraginosansgb,stheitimedium,"
+            "pingfangtc,pingfangsc,notosanscjktc,notosanscjksc,notosanscjk,wenquanyizenhei,arialunicodems,arial",
+            size, bold=bold)
+    except Exception:
+        return pygame.font.Font(None, size)
 
 
 def ang_diff(a, b):
@@ -333,11 +337,11 @@ class Game:
                         pygame.draw.rect(surf, (172, 150, 106), (x, y, 5, TILE))
                 elif self.grid[ty][tx] == 1 and not self.tile_solid(tx, ty + 1):
                     pygame.draw.rect(surf, (90, 72, 52), (tx * TILE, ty * TILE + TILE - 6, TILE, 6))
-        tint = pygame.Surface((MW * TILE, MH * TILE), pygame.SRCALPHA)
         for rect, col in ((CT_SPAWN, (70, 130, 255, 22)), (T_SPAWN, (255, 130, 40, 22))):
             x, y, w, h = rect
-            tint.fill(col, (x * TILE, y * TILE, w * TILE, h * TILE))
-        surf.blit(tint, (0, 0))
+            sub = pygame.Surface((w * TILE, h * TILE), pygame.SRCALPHA)
+            sub.fill(col)
+            surf.blit(sub, (x * TILE, y * TILE), special_flags=pygame.BLEND_ALPHA_SDL2)
         return surf
 
     # ---------------- 回合
@@ -832,17 +836,50 @@ class View:
     def __init__(self, screen, assets):
         self.s = screen
         self.A = assets
-        self.smoke_layer = pygame.Surface((SW, SH), pygame.SRCALPHA)
-        self.fx_layer = pygame.Surface((SW, SH), pygame.SRCALPHA)
         self.f_s, self.f_m, self.f_l, self.f_xl = font(18), font(24, True), font(40, True), font(64, True)
+
+    @staticmethod
+    def _local_layer(radius):
+        radius = max(1, int(math.ceil(radius)))
+        size = radius * 2 + 2
+        layer = pygame.Surface((size, size), pygame.SRCALPHA, 32)
+        layer.fill((0, 0, 0, 0))
+        return layer, radius + 1
+
+    def _draw_fire(self, fire, cx, cy, now):
+        layer, offset = self._local_layer(fire.RAD + 22)
+        fade = max(0.0, min(1.0, (fire.DUR - fire.age) / 1.0))
+        for px, py, ph in fire.points:
+            pygame.draw.circle(layer, (40, 20, 10, int(90 * fade)),
+                               (offset + int(px - fire.x), offset + int(py - fire.y)), 16)
+        for px, py, ph in fire.points:
+            fl = 0.5 + 0.5 * math.sin(now * 13 + ph * 3)
+            pygame.draw.circle(layer, (255, int(110 + 120 * fl), int(30 * fl), int(220 * fade)),
+                               (offset + int(px - fire.x + math.sin(now * 7 + ph) * 3),
+                                offset + int(py - fire.y - fl * 4)), max(1, int(6 + fl * 7)))
+        self.s.blit(layer, (int(fire.x - cx - offset), int(fire.y - cy - offset)),
+                    special_flags=pygame.BLEND_ALPHA_SDL2)
+
+    def _draw_smoke(self, smoke, cx, cy):
+        radius = smoke.r * 1.3 + 2
+        layer, offset = self._local_layer(radius)
+        for angle, distance, size, spin, shade in smoke.puffs:
+            a = angle + spin * smoke.age
+            px = math.cos(a) * distance * smoke.r
+            py = math.sin(a) * distance * smoke.r
+            pygame.draw.circle(layer, (shade, shade, shade, int(215 * smoke.fade)),
+                               (offset + int(px), offset + int(py)),
+                               max(1, int(size * smoke.r / smoke.RMAX)))
+        self.s.blit(layer, (int(smoke.x - cx - offset), int(smoke.y - cy - offset)),
+                    special_flags=pygame.BLEND_ALPHA_SDL2)
 
     def text(self, t, f, col, pos, anchor="topleft", shadow=True):
         img = f.render(t, True, col)
         r = img.get_rect(**{anchor: pos})
         if shadow:
             sh = f.render(t, True, (0, 0, 0))
-            self.s.blit(sh, r.move(2, 2))
-        self.s.blit(img, r)
+            self.s.blit(sh, r.move(2, 2), special_flags=pygame.BLEND_ALPHA_SDL2)
+        self.s.blit(img, r, special_flags=pygame.BLEND_ALPHA_SDL2)
         return r
 
     def camera(self, g, mouse):
@@ -884,19 +921,10 @@ class View:
         s.blit(g.map_surf, (0, 0), (cx, cy, SW, SH))
         p = g.player
 
-        # 燃燒彈
-        fx = self.fx_layer
-        fx.fill((0, 0, 0, 0))
+        # 燃燒彈：只在火焰自己的局部透明圖層上繪製。
         t = pygame.time.get_ticks() / 1000
         for f in g.fires:
-            fade = min(1.0, (f.DUR - f.age) / 1.0)
-            for px, py, ph in f.points:
-                pygame.draw.circle(fx, (40, 20, 10, int(90 * fade)), (px - cx, py - cy), 16)
-            for px, py, ph in f.points:
-                fl = 0.5 + 0.5 * math.sin(t * 13 + ph * 3)
-                col = (255, int(110 + 120 * fl), int(30 * fl), int(220 * fade))
-                pygame.draw.circle(fx, col, (px - cx + math.sin(t * 7 + ph) * 3, py - cy - fl * 4), 6 + fl * 7)
-        s.blit(fx, (0, 0))
+            self._draw_fire(f, cx, cy, t)
 
         for n in g.nades:
             col = {"he": (60, 90, 50), "smoke": (170, 170, 170), "molotov": (200, 80, 30)}[n.kind]
@@ -915,17 +943,9 @@ class View:
         for x, y, vx, vy, life, mx, col, size in g.parts:
             pygame.draw.circle(s, col, (x - cx, y - cy), max(1, size * life / mx))
 
-        # 煙霧
-        sl = self.smoke_layer
-        sl.fill((0, 0, 0, 0))
+        # 煙霧：只在煙霧自己的局部透明圖層上繪製。
         for sm in g.smokes:
-            r = sm.r
-            for a, d, size, spin, shade in sm.puffs:
-                aa = a + spin * sm.age
-                px = sm.x + math.cos(aa) * d * r - cx
-                py = sm.y + math.sin(aa) * d * r - cy
-                pygame.draw.circle(sl, (shade, shade, shade, int(215 * sm.fade)), (px, py), size * r / sm.RMAX)
-        s.blit(sl, (0, 0))
+            self._draw_smoke(sm, cx, cy)
 
         # 投擲預覽
         if p.alive and p.slot in ("he", "smoke", "molotov"):
@@ -979,7 +999,7 @@ class View:
             x = SW - 14 - wsum
             pygame.draw.rect(s, (0, 0, 0), (x - 8, y - 3, wsum + 16, 28), border_radius=5)
             for i in imgs:
-                s.blit(i, (x, y))
+                s.blit(i, (x, y), special_flags=pygame.BLEND_ALPHA_SDL2)
                 x += i.get_width()
             y += 32
 
@@ -1047,7 +1067,7 @@ class View:
         s.blit(pygame.transform.smoothscale(g.map_surf, (SW, int(SW * MH / MW))), (0, -100))
         ov = pygame.Surface((SW, SH), pygame.SRCALPHA)
         ov.fill((10, 12, 18, 215))
-        s.blit(ov, (0, 0))
+        s.blit(ov, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
         self.text(f"Round {g.round + 1} — Choose Your Primary", self.f_xl, (240, 240, 240), (SW // 2, 70), "center")
         self.text(f"Score  You {g.score[0]} : {g.score[1]} NPC      Kills {g.kills}  Deaths {g.deaths}",
                   self.f_m, (200, 200, 200), (SW // 2, 130), "center")
@@ -1064,11 +1084,14 @@ class View:
             stats = [("Dmg", min(1.0, w["dmg"] * w["pellets"] / 120)), ("Rate", min(1.0, 0.07 / w["rate"])),
                      ("Aim", 1 - min(1.0, (w["spread"] + w["move"] * 0.3) / 0.11)), ("Move", (w["speed"] - 170) / 80)]
             sx = r.x + 330
+            bar_w = 64
             for name, v in stats:
-                self.text(name, self.f_s, (180, 180, 180), (sx, r.centery), "midleft", shadow=False)
-                pygame.draw.rect(s, (60, 60, 70), (sx + 44, r.centery - 5, 80, 10))
-                pygame.draw.rect(s, (110, 200, 120), (sx + 44, r.centery - 5, 80 * max(0.05, v), 10))
-                sx += 130
+                label = self.text(name, self.f_s, (180, 180, 180), (sx, r.centery), "midleft", shadow=False)
+                bar_x = label.right + 8
+                pygame.draw.rect(s, (60, 60, 70), (bar_x, r.centery - 5, bar_w, 10))
+                pygame.draw.rect(s, (110, 200, 120),
+                                 (bar_x, r.centery - 5, bar_w * max(0.05, min(1.0, v)), 10))
+                sx = bar_x + bar_w + 10
             rects.append(r)
         self.text("Every round includes: USP-S, HE Grenade, Smoke Grenade, Molotov    Press 1–5 or click",
                   self.f_s, (200, 200, 200), (SW // 2, SH - 40), "center")

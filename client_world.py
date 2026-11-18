@@ -31,7 +31,8 @@ class VUnit:
 
 
 def render_map(g):
-    surf = pygame.Surface((MW * TILE, MH * TILE))
+    surf = pygame.Surface((MW * TILE, MH * TILE), 0, 32, (16711680, 65280, 255, 0))
+    surf.fill((0, 0, 0))
     rnd = random.Random(42)
     for ty in range(MH):
         for tx in range(MW):
@@ -58,11 +59,11 @@ def render_map(g):
                     pygame.draw.rect(surf, (172, 150, 106), (x, y, 5, TILE))
             elif g.grid[ty][tx] == 1 and not g.tile_solid(tx, ty + 1):
                 pygame.draw.rect(surf, (90, 72, 52), (tx * TILE, ty * TILE + TILE - 6, TILE, 6))
-    tint = pygame.Surface((MW * TILE, MH * TILE), pygame.SRCALPHA)
     for rect, col in ((CT_SPAWN, (70, 130, 255, 22)), (T_SPAWN, (255, 130, 40, 22))):
         x, y, w, h = rect
-        tint.fill(col, (x * TILE, y * TILE, w * TILE, h * TILE))
-    surf.blit(tint, (0, 0))
+        sub = pygame.Surface((w * TILE, h * TILE), pygame.SRCALPHA)
+        sub.fill(col)
+        surf.blit(sub, (x * TILE, y * TILE), special_flags=pygame.BLEND_ALPHA_SDL2)
     return surf
 
 

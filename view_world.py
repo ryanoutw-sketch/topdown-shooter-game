@@ -5,11 +5,113 @@ import math
 
 import pygame
 
-from config import SW, SH, ZOOM, R, NADES, DARK_ALPHA
+from config import SW, SH, ZOOM, R, NADES, FOG_EDGE, DARK_ALPHA
 from utils import team_col, view_r
 
 
 class WorldDrawMixin:
+    @staticmethod
+    def _local_layer(radius):
+        """Create a transparent surface limited to one local effect."""
+        radius = max(1, int(math.ceil(radius)))
+        size = radius * 2 + 2
+        layer = pygame.Surface((size, size), pygame.SRCALPHA, 32)
+        layer.fill((0, 0, 0, 0))
+        return layer, radius + 1
+
+    def _draw_fire(self, fire, cx, cy, now):
+        Z = ZOOM
+        radius = fire.RAD * Z + 22
+        layer, offset = self._local_layer(radius)
+        fade = max(0.0, min(1.0, (fire.DUR - fire.age) / 1.0))
+        for px, py, ph in fire.points:
+            pygame.draw.circle(
+                layer,
+                (40, 20, 10, int(90 * fade)),
+                (offset + int((px - fire.x) * Z), offset + int((py - fire.y) * Z)),
+                max(1, int(16 * Z)),
+            )
+        for px, py, ph in fire.points:
+            fl = 0.5 + 0.5 * math.sin(now * 13 + ph * 3)
+            pygame.draw.circle(
+                layer,
+                (255, int(110 + 120 * fl), int(30 * fl), int(220 * fade)),
+                (
+                    offset + int((px - fire.x + math.sin(now * 7 + ph) * 3) * Z),
+                    offset + int((py - fire.y - fl * 4) * Z),
+                ),
+                max(1, int((6 + fl * 7) * Z)),
+            )
+        self.s.blit(
+            layer,
+            (int((fire.x - cx) * Z - offset), int((fire.y - cy) * Z - offset)),
+            special_flags=pygame.BLEND_ALPHA_SDL2,
+        )
+
+    def _draw_smoke(self, smoke, cx, cy):
+        Z = ZOOM
+        # Puffs extend beyond the nominal smoke radius, so leave extra room.
+        radius = smoke.r * 1.3 * Z + 2
+        layer, offset = self._local_layer(radius)
+        for angle, distance, size, spin, shade in smoke.puffs:
+            a = angle + spin * smoke.age
+            px = math.cos(a) * distance * smoke.r
+            py = math.sin(a) * distance * smoke.r
+            pygame.draw.circle(
+                layer,
+                (shade, shade, shade, int(215 * smoke.fade)),
+                (offset + int(px * Z), offset + int(py * Z)),
+                max(1, int(size * smoke.r / smoke.RMAX * Z)),
+            )
+        self.s.blit(
+            layer,
+            (int((smoke.x - cx) * Z - offset), int((smoke.y - cy) * Z - offset)),
+            special_flags=pygame.BLEND_ALPHA_SDL2,
+        )
+
+    def draw_fog(self, viewers, cx, cy):
+        """Draw a cross-platform circular visibility mask.
+
+        Two union masks are used: the outer vision circles and the inner
+        circles after removing the soft edge.  Converting those masks directly
+        into per-pixel alpha avoids BLEND_RGBA_MIN, which is unreliable on
+        some macOS SDL backends.
+        """
+        Z = ZOOM
+        outer = self.fog_outer
+        inner = self.fog_inner
+        outer.fill((0, 0, 0, 0))
+        inner.fill((0, 0, 0, 0))
+
+        for v in viewers:
+            target = view_r(v)
+            cur = self.fog_r.get(v.uid, target)
+            cur += (target - cur) * 0.15
+            if abs(cur - target) < 1:
+                cur = target
+            self.fog_r[v.uid] = cur
+
+            center = (int((v.x - cx) * Z), int((v.y - cy) * Z))
+            outer_r = max(1, int(cur * Z))
+            inner_r = max(0, outer_r - FOG_EDGE)
+            pygame.draw.circle(outer, (255, 255, 255, 255), center, outer_r)
+            if inner_r:
+                pygame.draw.circle(inner, (255, 255, 255, 255), center, inner_r)
+
+        outer_mask = pygame.mask.from_surface(outer)
+        inner_mask = pygame.mask.from_surface(inner)
+        edge_mask = outer_mask.copy()
+        edge_mask.erase(inner_mask, (0, 0))
+
+        fade = max(0.0, min(1.0, self.pan_k))
+        dark_alpha = int(DARK_ALPHA * fade)
+        edge_alpha = int(DARK_ALPHA * 0.42 * fade)
+        dk = self.dark
+        dk.fill((0, 0, 0, dark_alpha))
+        edge_mask.to_surface(dk, setcolor=(0, 0, 0, edge_alpha), unsetcolor=None)
+        inner_mask.to_surface(dk, setcolor=(0, 0, 0, 0), unsetcolor=None)
+        self.s.blit(dk, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
+
     # ---------------- 世界（直接以 ZOOM 縮放後的座標畫在螢幕上）
     def draw_unit(self, u, cx, cy, me, team):
         Z = ZOOM
@@ -48,19 +150,10 @@ class WorldDrawMixin:
         vs = self.viewers(w, me)
 
         if w.fires:
-            lay = self.fx_layer
-            lay.fill((0, 0, 0, 0))
+            # Fire is rendered only inside its own local alpha surface.
             t = pygame.time.get_ticks() / 1000
-            for f in w.fires:
-                fade = max(0.0, min(1.0, (f.DUR - f.age) / 1.0))
-                for px, py, ph in f.points:
-                    pygame.draw.circle(lay, (40, 20, 10, int(90 * fade)), ((px - cx) * Z, (py - cy) * Z), 16 * Z)
-                for px, py, ph in f.points:
-                    fl = 0.5 + 0.5 * math.sin(t * 13 + ph * 3)
-                    pygame.draw.circle(lay, (255, int(110 + 120 * fl), int(30 * fl), int(220 * fade)),
-                                       ((px - cx + math.sin(t * 7 + ph) * 3) * Z, (py - cy - fl * 4) * Z),
-                                       (6 + fl * 7) * Z)
-            s.blit(lay, (0, 0))
+            for fire in w.fires:
+                self._draw_fire(fire, cx, cy, t)
 
         for kind, nx, ny in w.nades:
             col = {"he": (60, 90, 50), "smoke": (170, 170, 170), "molotov": (200, 80, 30)}[kind]
@@ -80,35 +173,11 @@ class WorldDrawMixin:
             pygame.draw.circle(s, col, ((x - cx) * Z, (y - cy) * Z), max(1, size * life / mx * Z))
 
         if w.smokes:
-            sl = self.smoke_layer
-            sl.fill((0, 0, 0, 0))
-            for sm in w.smokes:
-                r = sm.r
-                for a, d, size, spin, shade in sm.puffs:
-                    aa = a + spin * sm.age
-                    pygame.draw.circle(sl, (shade, shade, shade, int(215 * sm.fade)),
-                                       ((sm.x + math.cos(aa) * d * r - cx) * Z, (sm.y + math.sin(aa) * d * r - cy) * Z),
-                                       size * r / sm.RMAX * Z)
-            s.blit(sl, (0, 0))
+            for smoke in w.smokes:
+                self._draw_smoke(smoke, cx, cy)
 
         if vs is not None:  # 圓形戰爭迷霧（合作時隊友的視野圓合併）
-            dk = self.dark
-            dk.fill((0, 0, 0, DARK_ALPHA))
-            for v in vs:
-                target = view_r(v)
-                cur = self.fog_r.get(v.uid, target)
-                cur += (target - cur) * 0.15
-                if abs(cur - target) < 1:
-                    cur = target
-                self.fog_r[v.uid] = cur
-                hole = self.holes[int(target * Z)]
-                if cur != target:  # 切槍中：把目標的圓縮放到目前大小
-                    rs = int(cur * Z)
-                    hole = pygame.transform.scale(hole, (rs * 2, rs * 2))
-                hr = hole.get_width() // 2
-                dk.blit(hole, ((v.x - cx) * Z - hr, (v.y - cy) * Z - hr), special_flags=pygame.BLEND_RGBA_MIN)
-            dk.set_alpha(int(255 * self.pan_k))  # 回合開始鏡頭掃過地圖時先不蓋迷霧，掃到自己身上再淡入
-            s.blit(dk, (0, 0))
+            self.draw_fog(vs, cx, cy)
 
         p = w.unit(me)
         if p and p.alive and p.slot in NADES and w.s["st"] == "live":

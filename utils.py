@@ -14,9 +14,27 @@ def team_col(team):
 
 
 def font(size, bold=False):
-    return pygame.font.SysFont(
-        "microsoftjhenghei,microsoftjhengheiui,microsoftyahei,pmingliu,notosanscjktc,notosanscjksc,"
-        "notosanscjk,wenquanyizenhei,arialunicodems,arial", size, bold=bold)
+    try:
+        return pygame.font.SysFont(
+            "microsoftjhenghei,microsoftjhengheiui,microsoftyahei,pmingliu,hiraginosansgb,stheitimedium,"
+            "pingfangtc,pingfangsc,notosanscjktc,notosanscjksc,notosanscjk,wenquanyizenhei,arialunicodems,arial",
+            size, bold=bold)
+    except Exception:
+        return pygame.font.Font(None, size)
+
+
+def text_surface(fnt, text, color):
+    """Render text，確保回傳 per-pixel alpha surface（SRCALPHA）。
+    pygame.font.render() 在某些 macOS SDL2 路徑下會回傳無 alpha channel 的 surface，
+    需手動轉換為 SRCALPHA，才能讓 BLEND_ALPHA_SDL2 正確合成。
+    """
+    surf = fnt.render(text, True, color)
+    if surf.get_masks()[3] == 0:
+        # 無 alpha channel：轉成 per-pixel alpha
+        alpha = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
+        alpha.blit(surf, (0, 0))
+        return alpha
+    return surf
 
 
 def ang_diff(a, b):

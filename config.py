@@ -59,7 +59,7 @@ assert REGEN_RATE < MIN_GUN_DPS * COOP_BOT["dmg"], "Regen must stay below every 
 ZOOM = 0.75
 VW, VH = int(SW / ZOOM), int(SH / ZOOM)
 # 視野圓半徑由手上的槍決定（WEAPONS 的 view）；拿投擲物時用主武器的視野。圓內的敵人仍會被牆擋住
-FOG_EDGE = 70       # 圓邊緣的漸層寬度（螢幕像素）
+FOG_EDGE = 0        # 圓邊緣的漸層寬度（0 = 硬邊、不使用漸層）
 DARK_ALPHA = 245
 TEAM_NAMES = {"CT": "Defenders", "T": "Attackers"}
 

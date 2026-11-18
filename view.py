@@ -10,8 +10,8 @@ import random
 
 import pygame
 
-from config import SW, SH, MW, MH, TILE, ZOOM, VW, VH, WEAPONS, FOG_EDGE, DARK_ALPHA
-from utils import font, view_r
+from config import SW, SH, MW, MH, TILE, ZOOM, VW, VH
+from utils import font, text_surface, view_r
 from view_hud import HudMixin
 from view_menus import MenuMixin
 from view_world import WorldDrawMixin
@@ -20,10 +20,12 @@ from view_world import WorldDrawMixin
 class View(WorldDrawMixin, HudMixin, MenuMixin):
     def __init__(self, screen):
         self.s = screen
-        self.smoke_layer = pygame.Surface((SW, SH), pygame.SRCALPHA)
-        self.fx_layer = pygame.Surface((SW, SH), pygame.SRCALPHA)
-        self.dark = pygame.Surface((SW, SH), pygame.SRCALPHA)
-        self.holes = {int(w["view"] * ZOOM): self.make_hole(int(w["view"] * ZOOM)) for w in WEAPONS.values()}
+        # The fog mask is built from pygame masks instead of BLEND_RGBA_MIN.
+        # The latter can make the transparent vision hole disappear on some
+        # macOS SDL compositing paths, leaving the whole screen black.
+        self.dark = pygame.Surface((SW, SH), pygame.SRCALPHA, 32)
+        self.fog_outer = pygame.Surface((SW, SH), pygame.SRCALPHA, 32)
+        self.fog_inner = pygame.Surface((SW, SH), pygame.SRCALPHA, 32)
         self.fog_r = {}  # 每個視野來源目前顯示的半徑（切槍時平滑變化）
         self.pan_k = 1.0  # 回合開始鏡頭平移進度（anim.py 設定；1 = 正常跟隨）
         self.red = pygame.Surface((SW, SH), pygame.SRCALPHA)
@@ -31,11 +33,12 @@ class View(WorldDrawMixin, HudMixin, MenuMixin):
         self.cam = (0.0, 0.0)
 
     def text(self, t, f, col, pos, anchor="topleft", shadow=True):
-        img = f.render(t, True, col)
+        img = text_surface(f, t, col)
         r = img.get_rect(**{anchor: pos})
         if shadow:
-            self.s.blit(f.render(t, True, (0, 0, 0)), r.move(2, 2))
-        self.s.blit(img, r)
+            sh = text_surface(f, t, (0, 0, 0))
+            self.s.blit(sh, r.move(2, 2), special_flags=pygame.BLEND_ALPHA_SDL2)
+        self.s.blit(img, r, special_flags=pygame.BLEND_ALPHA_SDL2)
         return r
 
     # ---------------- 視角 / 視野
@@ -73,19 +76,7 @@ class View(WorldDrawMixin, HudMixin, MenuMixin):
         team = self.my_team(w, me)
         vs = [o for o in w.units if o.alive and not o.bot and o.team == team]
         return vs or None
-
     @staticmethod
     def can_see(w, vs, u, team):
         return vs is None or u.team == team or any(
             math.hypot(u.x - v.x, u.y - v.y) < view_r(v) and w.los(v.x, v.y, u.x, u.y) for v in vs)
-
-    @staticmethod
-    def make_hole(rs):
-        """視野圓（螢幕半徑 rs）：中間透明、邊緣漸層到全黑。用 BLEND_RGBA_MIN 疊上去，多個圓會自動合併。"""
-        hole = pygame.Surface((rs * 2, rs * 2), pygame.SRCALPHA)
-        hole.fill((0, 0, 0, DARK_ALPHA))
-        for r in range(rs, rs - FOG_EDGE, -1):
-            a = int(DARK_ALPHA * (r - (rs - FOG_EDGE)) / FOG_EDGE)
-            pygame.draw.circle(hole, (0, 0, 0, a), (rs, rs), r)
-        pygame.draw.circle(hole, (0, 0, 0, 0), (rs, rs), rs - FOG_EDGE)
-        return hole

@@ -7,7 +7,8 @@
 
 模式（主機在大廳選，M 切換）:
   合作：兩人都是防守方，一起對抗 NPC 進攻方（主機可以不等玩家 2，直接單人開打）
-  對戰：1v1，每回合交換攻守（防守方上方出生 / 進攻方下方出生）
+  對戰：1v1，每回合交換攻守
+  地圖（主機在大廳按 G 切換）：Dunes 沙漠圖、Old Town 小鎮圖
 
 操作:
   WASD 移動 / Shift 靜步（更準）/ 滑鼠瞄準 / 左鍵射擊或投擲
@@ -26,6 +27,7 @@ import pygame
 from client import Screen, poll, setup
 from config import FPS, PORT
 from game import Game
+from map_data import MAP_ORDER
 from network import Net
 from utils import local_ip
 
@@ -113,6 +115,8 @@ def run_host(port, name):
                     acts.append(("mode", "pvp" if game.mode == "coop" else "coop"))
                 elif key in (pygame.K_1, pygame.K_2, pygame.K_3):
                     acts.append(("diff", key - pygame.K_0))
+                elif key == pygame.K_g:  # 切換地圖
+                    acts.append(("map", MAP_ORDER[(MAP_ORDER.index(game.map_id) + 1) % len(MAP_ORDER)]))
                 elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     acts.append(("start", None))
             for kind, val in acts:
@@ -120,6 +124,8 @@ def run_host(port, name):
                     game.mode = val
                 elif kind == "diff":
                     game.diff = val
+                elif kind == "map":
+                    game.set_map(val)
                 elif kind == "start":
                     if game.mode == "pvp" and not connected:
                         game.notice = "Versus mode needs Player 2 to connect"

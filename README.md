@@ -8,7 +8,7 @@ py topdown_shooter.py --host                            # 主機（可加 --name
 py topdown_shooter.py --join 192.168.50.112             # 另一台加入
 ```
 
-主機在大廳：**M** 切換合作／對戰、**1/2/3** 選難度、**Enter** 開始、**ESC** 離開。
+主機在大廳：**M** 切換合作／對戰、**1/2/3** 選難度、**G** 切換地圖（Dunes 沙漠圖／Old Town 小鎮圖）、**Enter** 開始、**ESC** 離開。
 
 ## 檔案結構
 
@@ -18,7 +18,8 @@ py topdown_shooter.py --join 192.168.50.112             # 另一台加入
 |---|---|---|
 | `topdown_shooter.py` | 程式入口：參數、主機迴圈、加入者迴圈、連線/斷線處理 | 想了解整體流程、改啟動參數 |
 | `config.py` | **所有可調數值**：畫面、回合時間、勝利回合數、武器（傷害/射速/視野…）、NPC 難度、合作模式減弱、回血、視野、顏色 | 平衡遊戲最常改這裡 |
-| `map_data.py` | 地圖格局：地板、箱子、出生點、NPC 進攻路線 | 改地圖 |
+| `map_data.py` | 所有地圖的資料（`MAPS`）：地板、箱子/物件、出生點、NPC 進攻路線、畫風 | 改地圖、加新地圖 |
+| `map_art.py` | 地圖畫風：沙漠（desert）、義大利小鎮（italian，屋頂、石板路、噴泉等物件） | 改地圖外觀 |
 | **主機端（遊戲規則）** | | |
 | `game.py` | 回合流程、開槍判定、傷害、投擲物、回血、玩家輸入、送出快照 | 改規則、勝負條件 |
 | `bots.py` | NPC AI：A* 尋路、反應/瞄準/掃射、追蹤、丟手榴彈、躲火 | 改 NPC 行為 |
@@ -55,7 +56,7 @@ py topdown_shooter.py --join 192.168.50.112             # 另一台加入
 | 回血速度 | `config.py` → `REGEN_DELAY`、`REGEN_RATE`（不能超過任何槍的 DPS，程式會檢查） |
 | 畫面縮放 | `config.py` → `ZOOM` |
 | 幾回合獲勝、回合時間 | `config.py` → `WIN_ROUNDS`、`ROUND_TIME` |
-| 地圖 | `map_data.py` |
+| 地圖、加新地圖 | `map_data.py` → 在 `MAPS` 加一筆並加進 `MAP_ORDER`（欄位說明在檔案開頭） |
 | 動畫長度（入場、倒數、慢動作…） | `config.py` → 「動畫」區 |
 
 ## 其他

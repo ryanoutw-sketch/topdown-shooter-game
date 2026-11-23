@@ -10,7 +10,7 @@ from bots import BotMixin
 from config import (DIFFS, COOP_BOT, ROUND_TIME, WIN_ROUNDS, BOT_NAMES, PRIMARIES, NADES, SLOTS,
                     WEAPONS, R, TILE, REGEN_DELAY, REGEN_RATE, FREEZE_TIME, SLOWMO_TIME, SLOWMO_SCALE, END_TIME)
 from grid import MapGrid, Smoke, Fire
-from map_data import CT_HUMAN_SPOTS, T_HUMAN_SPOTS, T_SPAWN, ROUTES
+from map_data import MAPS
 from units import Unit, Nade
 from utils import tile_center
 
@@ -51,6 +51,12 @@ class Game(BotMixin, MapGrid):
         self.notice = ""
         self.state = "buy"
 
+    def set_map(self, map_id):
+        """換地圖（只在大廳時呼叫）。"""
+        if map_id in MAPS and map_id != self.map_id:
+            self.load_map(map_id)
+            self.reset_match()
+
     def to_lobby(self, notice=""):
         self.reset_match()
         self.state = "lobby"
@@ -71,13 +77,13 @@ class Game(BotMixin, MapGrid):
         used = {"CT": 0, "T": 0}
         for uid in sorted(self.humans):
             team = self.human_team(uid, self.round)
-            spot = (CT_HUMAN_SPOTS if team == "CT" else T_HUMAN_SPOTS)[used[team]]
+            spot = self.mp["ct_spots" if team == "CT" else "t_spots"][used[team]]
             used[team] += 1
             self.units.append(Unit(uid, *tile_center(spot), team, self.picks.get(uid, "m4"), False, self.names[uid]))
         if self.mode == "coop":
             n = min(len(BOT_NAMES), self.D["bots"] + 2 * (len(self.humans) - 1))
-            spots = random.sample(self.free_tiles(T_SPAWN), n)
-            routes = random.sample(ROUTES, len(ROUTES))
+            spots = random.sample(self.free_tiles(self.mp["t_spawn"]), n)
+            routes = random.sample(self.mp["routes"], len(self.mp["routes"]))
             names = random.sample(BOT_NAMES, n)
             pool = ["ak", "ak", "smg", "shotgun", "m4"] + (["awp"] if self.D["bots"] >= 5 else [])
             for i, t in enumerate(spots):
@@ -426,7 +432,7 @@ class Game(BotMixin, MapGrid):
     def snapshot(self, connected):
         nxt = self.round if self.state in ("live", "end") else self.round + 1
         snap = {
-            "st": self.state, "mode": self.mode, "diff": self.diff, "round": self.round,
+            "st": self.state, "mode": self.mode, "diff": self.diff, "round": self.round, "map": self.map_id,
             "timer": round(self.timer, 2), "score": self.score, "rw": self.rw, "reason": self.reason,
             "freeze": round(self.freeze, 3), "slow": round(self.slow, 3), "end_t": round(self.end_t, 3),
             "humans": self.humans, "picks": list(self.picks), "stats": self.stats, "names": self.names,

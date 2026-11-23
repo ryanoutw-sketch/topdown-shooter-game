@@ -6,22 +6,28 @@ import math
 import random
 
 from config import MW, MH, TILE, R
-from map_data import FLOORS, CRATES
+from map_data import DEFAULT_MAP, MAPS, solid_rects
 from utils import seg_point_dist
 
 
 class MapGrid:
-    def __init__(self):
+    def __init__(self, map_id=DEFAULT_MAP):
+        self.smokes = []
+        self.load_map(map_id)
+
+    def load_map(self, map_id):
+        """依地圖資料建出格子：0 = 地板、1 = 牆、2 = 箱子/物件（實心掩體）。"""
+        self.map_id = map_id if map_id in MAPS else DEFAULT_MAP
+        self.mp = MAPS[self.map_id]
         self.grid = [[1] * MW for _ in range(MH)]
-        for x, y, w, h in FLOORS:
-            for yy in range(y, y + h):
-                for xx in range(x, x + w):
+        for x, y, w, h in self.mp["floors"]:
+            for yy in range(max(0, y), min(MH, y + h)):
+                for xx in range(max(0, x), min(MW, x + w)):
                     self.grid[yy][xx] = 0
-        for x, y, w, h in CRATES:
+        for x, y, w, h in solid_rects(self.mp):
             for yy in range(y, y + h):
                 for xx in range(x, x + w):
                     self.grid[yy][xx] = 2
-        self.smokes = []
 
     def tile_solid(self, tx, ty):
         return not (0 <= tx < MW and 0 <= ty < MH) or self.grid[ty][tx] != 0

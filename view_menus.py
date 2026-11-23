@@ -4,12 +4,13 @@
 import pygame
 
 from config import SW, SH, MW, MH, WEAPONS, PRIMARIES, DIFFS, MODE_NAMES
+from map_data import MAPS, MAP_ORDER, spawn_where
 from utils import team_col
 
 
 class MenuMixin:
     # ---------------- 選單畫面
-    def lobby(self, S, me, is_host, mouse, ip, port):
+    def lobby(self, S, me, is_host, mouse, ip, port, w=None):
         s = self.s
         s.fill((22, 20, 18))
         self.text("2D TOP DOWN SHOOTING GAME", self.f_xl, (230, 190, 90), (SW // 2, 80), "center")
@@ -36,9 +37,28 @@ class MenuMixin:
             self.text("Co-op NPCs are weakened (65% damage, slower reactions, worse aim) · 2 extra NPCs with two players",
                       self.f_s, (170, 170, 170), (SW // 2, 330), "center")
         else:
-            self.text("Sides swap every round: Defenders spawn at the top, Attackers at the bottom", self.f_s, (170, 170, 170), (SW // 2, 287), "center")
+            m = S.get("map", MAP_ORDER[0])
+            self.text(f"Sides swap every round: Defenders spawn {spawn_where(m, 'CT')}, Attackers spawn {spawn_where(m, 'T')}",
+                      self.f_s, (170, 170, 170), (SW // 2, 287), "center")
 
-        y = 380
+        # ---- 地圖
+        self.text("MAP", self.f_s, (170, 170, 170), (SW // 2 - 430, 372), "midright")
+        cur = S.get("map", MAP_ORDER[0])
+        for i, mid in enumerate(MAP_ORDER):
+            r = pygame.Rect(SW // 2 - 410 + i * 280, 350, 260, 44)
+            sel = cur == mid
+            pygame.draw.rect(s, (60, 66, 84) if sel else (34, 36, 44), r, border_radius=10)
+            if sel:
+                pygame.draw.rect(s, (230, 200, 90), r, 2, border_radius=10)
+            self.text(MAPS[mid]["name"], self.f_m, (240, 240, 240) if sel else (180, 180, 190), r.center, "center")
+            acts.append((r, ("map", mid)))
+        if w is not None and getattr(w, "map_id", None) == cur:  # 目前地圖的縮圖
+            thumb = pygame.transform.smoothscale(w.mini, (200, 152))
+            tr = thumb.get_rect(topleft=(SW // 2 + 320, 412))
+            s.blit(thumb, tr)
+            pygame.draw.rect(s, (230, 200, 90), tr, 2)
+
+        y = 420
         for uid in (0, 1):
             connected = uid == 0 or S["conn"]
             label = f"{S['names'][uid]}{' (Host)' if uid == 0 else ''}{'  ← You' if uid == me else ''}"
@@ -47,35 +67,35 @@ class MenuMixin:
             self.text(label if connected else "Waiting for Player 2…", self.f_m, (235, 235, 235), (SW // 2 - 245, y + 24), "midleft")
             y += 60
         if is_host:
-            self.text(f"Other player runs:  py topdown_shooter.py --join {ip}    (port {port})", self.f_m, (230, 200, 90), (SW // 2, 530), "center")
-            hint = "M Switch mode · 1/2/3 Difficulty · Enter Start · ESC Quit"
+            self.text(f"Other player runs:  py topdown_shooter.py --join {ip}    (port {port})", self.f_m, (230, 200, 90), (SW // 2, 575), "center")
+            hint = "M Mode · 1/2/3 Difficulty · G Map · Enter Start · ESC Quit"
             if S["mode"] == "coop" and not S["conn"]:
-                hint = "M Switch mode · 1/2/3 Difficulty · Enter Start solo (or wait for P2) · ESC Quit"
+                hint = "M Mode · 1/2/3 Difficulty · G Map · Enter Start solo (or wait for P2) · ESC Quit"
         else:
             hint = "Connected — waiting for the host to start…  ·  ESC Quit"
-        self.text(hint, self.f_m, (210, 210, 210), (SW // 2, 590), "center")
+        self.text(hint, self.f_m, (210, 210, 210), (SW // 2, 622), "center")
         if S.get("notice"):
-            self.text(S["notice"], self.f_m, (255, 110, 90), (SW // 2, 650), "center")
+            self.text(S["notice"], self.f_m, (255, 110, 90), (SW // 2, 672), "center")
         return acts
 
     def buy_menu(self, w, me, mouse, my_pick):
         s, S = self.s, w.s
         bg = getattr(self, "_buy_bg", None)
-        if bg is None:  # 背景（縮小的地圖＋暗色遮罩）只畫一次，之後重複使用
+        if bg is None or getattr(self, "_buy_bg_map", None) != w.map_id:  # 背景（縮小的地圖＋暗色遮罩）每張地圖只畫一次
             bg = pygame.Surface((SW, SH), 0, 32, (16711680, 65280, 255, 0))
             bg.fill((10, 12, 18))
             bg.blit(pygame.transform.smoothscale(w.map_surf, (SW, int(SW * MH / MW))), (0, -100))
             ov = pygame.Surface((SW, SH), pygame.SRCALPHA)
             ov.fill((10, 12, 18, 215))
             bg.blit(ov, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
-            self._buy_bg = bg
+            self._buy_bg, self._buy_bg_map = bg, w.map_id
         s.blit(bg, (0, 0))
         team = S["side"][me]
         self.text(f"Round {S['round'] + 1} — Choose Your Primary", self.f_xl, (240, 240, 240), (SW // 2, 60), "center")
         if S["mode"] == "coop":
             sub = f"Score  Defenders (you) {S['score'][0]} : {S['score'][1]} Attackers (NPC)"
         else:
-            role = "Defenders (top spawn)" if team == "CT" else "Attackers (bottom spawn)"
+            role = f"{'Defenders' if team == 'CT' else 'Attackers'} ({spawn_where(S.get('map'), team)} spawn)"
             sub = f"Score  You {S['score'][me]} : {S['score'][1 - me]} Opponent      This round: {role}"
         self.text(sub, self.f_m, team_col(team), (SW // 2, 118), "center")
         rects = []

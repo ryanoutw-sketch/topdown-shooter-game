@@ -11,6 +11,7 @@ import random
 import pygame
 
 from config import SW, SH, WIN_ROUNDS, INTRO_TIME, IRIS_TIME, FREEZE_TIME, CT_COL, T_COL, TEAM_NAMES
+from map_data import spawn_where
 from utils import font, team_col, text_surface
 
 GOLD = (240, 200, 90)
@@ -249,7 +250,7 @@ class Animator:
                 if S["mode"] == "coop":
                     sub = f"Defenders · Hold off every attacker      Score {a} : {b}"
                 else:
-                    where = "top spawn" if team == "CT" else "bottom spawn"
+                    where = f"{spawn_where(S.get('map'), team)} spawn"
                     sub = f"Your team: {TEAM_NAMES[team]} ({where})      Score {a} : {b}"
                 self.text(f"ROUND {S['round']}", self.f_big, (245, 245, 250), (SW / 2 + off, 170))
                 self.text(sub, self.f_m, col, (SW / 2 + off, 238))

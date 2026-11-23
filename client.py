@@ -162,7 +162,7 @@ class Screen:
         st = S["st"]
         pygame.mouse.set_visible(st not in ("live", "end"))
         if st == "lobby":
-            self.rects = v.lobby(S, self.me, is_host, mouse, ip, port)
+            self.rects = v.lobby(S, self.me, is_host, mouse, ip, port, w)
         elif st == "buy":
             self.rects = v.buy_menu(w, self.me, mouse, self.my_pick)
         elif st == "over":

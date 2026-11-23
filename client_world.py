@@ -1,13 +1,12 @@
 """
 畫面端的世界資料：把主機送來的快照轉成可以畫的物件，並預先畫好地圖底圖。
 """
-import random
-
 import pygame
 
 from config import WEAPONS, MW, MH, TILE, ZOOM
 from grid import MapGrid, Smoke, Fire
-from map_data import CT_SPAWN, T_SPAWN
+from map_art import render_map
+from map_data import DEFAULT_MAP
 
 
 class VUnit:
@@ -30,56 +29,26 @@ class VUnit:
         return w["spread"] + w["move"] * self.moving + self.recoil
 
 
-def render_map(g):
-    surf = pygame.Surface((MW * TILE, MH * TILE), 0, 32, (16711680, 65280, 255, 0))
-    surf.fill((0, 0, 0))
-    rnd = random.Random(42)
-    for ty in range(MH):
-        for tx in range(MW):
-            r = pygame.Rect(tx * TILE, ty * TILE, TILE, TILE)
-            k = g.grid[ty][tx]
-            if k == 0:
-                v = rnd.randint(-8, 8)
-                surf.fill((196 + v, 172 + v, 124 + v), r)
-                pygame.draw.rect(surf, (184, 160, 114), r, 1)
-            elif k == 1:
-                surf.fill((112, 92, 68), r)
-            else:
-                surf.fill((150, 108, 60), r)
-                pygame.draw.rect(surf, (95, 65, 35), r.inflate(-4, -4), 3)
-                pygame.draw.line(surf, (95, 65, 35), r.topleft, r.bottomright, 3)
-                pygame.draw.line(surf, (95, 65, 35), r.topright, r.bottomleft, 3)
-    for ty in range(MH):
-        for tx in range(MW):
-            if g.grid[ty][tx] == 0:
-                x, y = tx * TILE, ty * TILE
-                if g.tile_solid(tx, ty - 1):
-                    pygame.draw.rect(surf, (160, 138, 96), (x, y, TILE, 7))
-                if g.tile_solid(tx - 1, ty):
-                    pygame.draw.rect(surf, (172, 150, 106), (x, y, 5, TILE))
-            elif g.grid[ty][tx] == 1 and not g.tile_solid(tx, ty + 1):
-                pygame.draw.rect(surf, (90, 72, 52), (tx * TILE, ty * TILE + TILE - 6, TILE, 6))
-    for rect, col in ((CT_SPAWN, (70, 130, 255, 22)), (T_SPAWN, (255, 130, 40, 22))):
-        x, y, w, h = rect
-        sub = pygame.Surface((w * TILE, h * TILE), pygame.SRCALPHA)
-        sub.fill(col)
-        surf.blit(sub, (x * TILE, y * TILE), special_flags=pygame.BLEND_ALPHA_SDL2)
-    return surf
-
-
 class World(MapGrid):
     """收到的快照 → 可以畫的東西。"""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, map_id=DEFAULT_MAP):
+        self.s = None
+        self.units, self.nades, self.fires = [], [], []
+        super().__init__(map_id)
+
+    def load_map(self, map_id):
+        """換地圖：重建格子並重畫底圖、小地圖、縮放後的地圖。"""
+        super().load_map(map_id)
         self.map_surf = render_map(self)
         self.mini = pygame.transform.smoothscale(self.map_surf, (MW * 4, MH * 4))
         self.map_z = pygame.transform.smoothscale(self.map_surf, (round(MW * TILE * ZOOM), round(MH * TILE * ZOOM)))
-        self.s = None
-        self.units, self.nades, self.fires = [], [], []
         self._smokes, self._fires = {}, {}
+        self.smokes, self.fires = [], []
 
     def apply(self, snap):
+        if snap.get("map", DEFAULT_MAP) != self.map_id:  # 主機換了地圖
+            self.load_map(snap.get("map", DEFAULT_MAP))
         self.s = snap
         self.units = [VUnit(a) for a in snap["u"]]
         self.nades = snap["n"]

@@ -25,7 +25,7 @@ import threading
 import pygame
 
 from client import Screen, poll, setup
-from config import FPS, PORT
+from config import FPS, PORT, GAME_VERSION
 from game import Game
 from map_data import MAP_ORDER
 from network import Net
@@ -90,6 +90,9 @@ def run_host(port, name):
             for m in net.drain():
                 if m.get("t") == "hello":
                     game.names[1] = str(m.get("name") or "P2")[:12]
+                    if m.get("ver") != GAME_VERSION:  # 加入者的版本跟主機不同
+                        game.notice = (f"Player 2 is running a different version ({m.get('ver') or 'older'}). "
+                                       f"Use the same branch and git pull on both computers.")
                 elif m.get("t") == "in":
                     got = True
                     for key in ("w", "a", "s", "d", "sh", "mx", "my", "held", "px", "py", "rnd"):
@@ -157,7 +160,7 @@ def run_client(host, port, name):
         print(f"Cannot connect to {host}:{port} → {e}\nMake sure the host is running --host and the firewall allows TCP {port}")
         return
     net = Net(sock)
-    net.send({"t": "hello", "name": name or "P2"})
+    net.send({"t": "hello", "name": name or "P2", "ver": GAME_VERSION})
     screen, clock, sounds = setup("2D Top Down Shooting Game — Client")
     ui = Screen(screen, sounds, 1)
 

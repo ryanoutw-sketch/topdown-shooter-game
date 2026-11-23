@@ -8,7 +8,7 @@ import random
 
 from bots import BotMixin
 from config import (DIFFS, COOP_BOT, ROUND_TIME, WIN_ROUNDS, BOT_NAMES, PRIMARIES, NADES, SLOTS,
-                    WEAPONS, R, TILE, REGEN_DELAY, REGEN_RATE, FREEZE_TIME, SLOWMO_TIME, SLOWMO_SCALE, END_TIME)
+                    WEAPONS, R, TILE, REGEN_DELAY, REGEN_RATE, GAME_VERSION, FREEZE_TIME, SLOWMO_TIME, SLOWMO_SCALE, END_TIME)
 from grid import MapGrid, Smoke, Fire
 from map_data import MAPS
 from units import Unit, Nade
@@ -432,7 +432,7 @@ class Game(BotMixin, MapGrid):
     def snapshot(self, connected):
         nxt = self.round if self.state in ("live", "end") else self.round + 1
         snap = {
-            "st": self.state, "mode": self.mode, "diff": self.diff, "round": self.round, "map": self.map_id,
+            "st": self.state, "mode": self.mode, "diff": self.diff, "round": self.round, "map": self.map_id, "ver": GAME_VERSION,
             "timer": round(self.timer, 2), "score": self.score, "rw": self.rw, "reason": self.reason,
             "freeze": round(self.freeze, 3), "slow": round(self.slow, 3), "end_t": round(self.end_t, 3),
             "humans": self.humans, "picks": list(self.picks), "stats": self.stats, "names": self.names,

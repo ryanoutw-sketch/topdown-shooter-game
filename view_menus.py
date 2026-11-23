@@ -3,7 +3,7 @@
 """
 import pygame
 
-from config import SW, SH, MW, MH, WEAPONS, PRIMARIES, DIFFS, MODE_NAMES
+from config import SW, SH, MW, MH, WEAPONS, PRIMARIES, DIFFS, MODE_NAMES, GAME_VERSION
 from map_data import MAPS, MAP_ORDER, spawn_where
 from utils import team_col
 
@@ -74,8 +74,11 @@ class MenuMixin:
         else:
             hint = "Connected — waiting for the host to start…  ·  ESC Quit"
         self.text(hint, self.f_m, (210, 210, 210), (SW // 2, 622), "center")
-        if S.get("notice"):
-            self.text(S["notice"], self.f_m, (255, 110, 90), (SW // 2, 672), "center")
+        notice = S.get("notice")
+        if not is_host and S.get("ver") != GAME_VERSION:  # 主機版本跟自己不同
+            notice = f"The host is running a different version ({S.get('ver') or 'older'}). Use the same branch and git pull on both computers."
+        if notice:
+            self.text(notice, self.f_s if len(notice) > 70 else self.f_m, (255, 110, 90), (SW // 2, 672), "center")
         return acts
 
     def buy_menu(self, w, me, mouse, my_pick):

@@ -70,19 +70,16 @@ class WorldDrawMixin:
         )
 
     def draw_fog(self, viewers, cx, cy):
-        """Draw a cross-platform circular visibility mask.
+        """圓形戰爭迷霧（跨平台、快速版）。
 
-        Two union masks are used: the outer vision circles and the inner
-        circles after removing the soft edge.  Converting those masks directly
-        into per-pixel alpha avoids BLEND_RGBA_MIN, which is unreliable on
-        some macOS SDL backends.
+        直接在半透明黑幕上用 pygame.draw.circle 畫 alpha=0 的圓「挖洞」：
+        draw.circle 是直接寫入像素、不經過混色，所以不需要 BLEND_RGBA_MIN
+        （該模式在部分 macOS SDL 上不可靠），也不需要每幀做整個畫面的 mask 轉換。
+        邊緣漸層：所有視野圓一起「由外往內、alpha 由大到小」畫同心圓，
+        兩個圓重疊的地方會保留較透明的值，所以合作模式的視野會正確合併。
         """
         Z = ZOOM
-        outer = self.fog_outer
-        inner = self.fog_inner
-        outer.fill((0, 0, 0, 0))
-        inner.fill((0, 0, 0, 0))
-
+        circles = []
         for v in viewers:
             target = view_r(v)
             cur = self.fog_r.get(v.uid, target)
@@ -90,26 +87,19 @@ class WorldDrawMixin:
             if abs(cur - target) < 1:
                 cur = target
             self.fog_r[v.uid] = cur
-
-            center = (int((v.x - cx) * Z), int((v.y - cy) * Z))
-            outer_r = max(1, int(cur * Z))
-            inner_r = max(0, outer_r - FOG_EDGE)
-            pygame.draw.circle(outer, (255, 255, 255, 255), center, outer_r)
-            if inner_r:
-                pygame.draw.circle(inner, (255, 255, 255, 255), center, inner_r)
-
-        outer_mask = pygame.mask.from_surface(outer)
-        inner_mask = pygame.mask.from_surface(inner)
-        edge_mask = outer_mask.copy()
-        edge_mask.erase(inner_mask, (0, 0))
+            circles.append(((int((v.x - cx) * Z), int((v.y - cy) * Z)), max(1, int(cur * Z))))
 
         fade = max(0.0, min(1.0, self.pan_k))
         dark_alpha = int(DARK_ALPHA * fade)
-        edge_alpha = int(DARK_ALPHA * 0.42 * fade)
         dk = self.dark
         dk.fill((0, 0, 0, dark_alpha))
-        edge_mask.to_surface(dk, setcolor=(0, 0, 0, edge_alpha), unsetcolor=None)
-        inner_mask.to_surface(dk, setcolor=(0, 0, 0, 0), unsetcolor=None)
+        edge = max(0, int(FOG_EDGE))
+        for k in range(edge, 0, -1):  # 外圈 → 內圈，alpha 遞減
+            a = int(dark_alpha * k / (edge + 1))
+            for c, r in circles:
+                pygame.draw.circle(dk, (0, 0, 0, a), c, max(1, r - edge + k))
+        for c, r in circles:
+            pygame.draw.circle(dk, (0, 0, 0, 0), c, max(1, r - edge))
         self.s.blit(dk, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
 
     # ---------------- 世界（直接以 ZOOM 縮放後的座標畫在螢幕上）

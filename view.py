@@ -24,8 +24,6 @@ class View(WorldDrawMixin, HudMixin, MenuMixin):
         # The latter can make the transparent vision hole disappear on some
         # macOS SDL compositing paths, leaving the whole screen black.
         self.dark = pygame.Surface((SW, SH), pygame.SRCALPHA, 32)
-        self.fog_outer = pygame.Surface((SW, SH), pygame.SRCALPHA, 32)
-        self.fog_inner = pygame.Surface((SW, SH), pygame.SRCALPHA, 32)
         self.fog_r = {}  # 每個視野來源目前顯示的半徑（切槍時平滑變化）
         self.pan_k = 1.0  # 回合開始鏡頭平移進度（anim.py 設定；1 = 正常跟隨）
         self.red = pygame.Surface((SW, SH), pygame.SRCALPHA)

@@ -5,7 +5,7 @@ import math
 
 import pygame
 
-from config import SW, SH, ZOOM, R, NADES, FOG_EDGE, DARK_ALPHA
+from config import SW, SH, ZOOM, R, NADES, FOG_EDGE, DARK_ALPHA, FLASH_MAX, FLASH_WHITE
 from utils import team_col, view_r
 
 
@@ -103,6 +103,22 @@ class WorldDrawMixin:
         self.s.blit(dk, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
 
     # ---------------- 世界（直接以 ZOOM 縮放後的座標畫在螢幕上）
+    def draw_flash(self, w, fx, me):
+        """被閃光彈閃到：畫面全白，再慢慢淡出，上面疊著被閃那一刻的殘影。"""
+        p = w.unit(me)
+        if not p or not p.alive or p.flash <= 0:
+            if p and not p.alive:
+                fx.snap = None
+            return
+        a = min(1.0, p.flash / (FLASH_MAX - FLASH_WHITE))
+        if not hasattr(self, "white"):
+            self.white = pygame.Surface((SW, SH), pygame.SRCALPHA)
+        self.white.fill((255, 255, 255, int(255 * a)))
+        self.s.blit(self.white, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
+        if fx.snap is not None:
+            fx.snap.set_alpha(int(80 * a))
+            self.s.blit(fx.snap, (0, 0))
+
     def draw_unit(self, u, cx, cy, me, team):
         Z = ZOOM
         x, y = (u.x - cx) * Z, (u.y - cy) * Z
@@ -146,7 +162,7 @@ class WorldDrawMixin:
                 self._draw_fire(fire, cx, cy, t)
 
         for kind, nx, ny in w.nades:
-            col = {"he": (60, 90, 50), "smoke": (170, 170, 170), "molotov": (200, 80, 30)}[kind]
+            col = {"he": (60, 90, 50), "smoke": (170, 170, 170), "molotov": (200, 80, 30), "flash": (235, 235, 210)}.get(kind, (200, 200, 200))
             pygame.draw.circle(s, (20, 20, 20), ((nx - cx) * Z, (ny - cy) * Z), 6)
             pygame.draw.circle(s, col, ((nx - cx) * Z, (ny - cy) * Z), 4)
 

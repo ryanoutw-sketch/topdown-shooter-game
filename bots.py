@@ -97,6 +97,19 @@ class BotMixin:
                 moving = True
                 break
 
+        if b.flash > 0.4:  # 被閃光彈閃到：看不到人，原地亂轉、偶爾朝大概方向亂開槍
+            b.react = None
+            b.angle += math.sin(b.flash * 5 + b.uid) * 4 * dt
+            if not moving and random.random() < dt * 2:
+                a = b.angle + math.pi + random.uniform(-1, 1)  # 往後退一點
+                self.move_unit(b, math.cos(a) * speed * 0.4 * dt * 6, math.sin(a) * speed * 0.4 * dt * 6)
+            if b.last_known and b.reload_t <= 0 and b.slot in b.guns and random.random() < dt * 2:
+                kx, ky = b.last_known
+                b.angle = math.atan2(ky - b.y, kx - b.x) + random.uniform(-1.0, 1.0)
+                self.try_fire(b)
+            b.moving += (0.0 - b.moving) * min(1.0, dt * 10)
+            return
+
         enemies = [u for u in self.units if u.alive and u.team != b.team]
         tgt, dist = None, 1e9
         for e in enemies:

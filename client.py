@@ -59,7 +59,7 @@ def build_input(view, state, keys_down, clicked, wheel, mouse, rects):
         inp["click"] = False
     elif state == "live":
         for key in keys_down:
-            if pygame.K_1 <= key <= pygame.K_5:
+            if pygame.K_1 <= key < pygame.K_1 + len(SLOTS):
                 inp["cmds"].append(["slot", SLOTS[key - pygame.K_1]])
             elif key == pygame.K_q:
                 inp["cmds"].append(["last"])
@@ -172,6 +172,10 @@ class Screen:
             v.pan_k = an.pan_k(S)
             focus = v.camera(w, self.me, mouse, self.fx)
             v.draw_world(w, self.fx, self.me, mouse)
+            if self.fx.snap_pending:  # 剛被閃：把這一刻的畫面存起來當殘影
+                self.fx.snap = v.s.copy()
+                self.fx.snap_pending = False
+            v.draw_flash(w, self.fx, self.me)
             v.draw_hud(w, self.fx, self.me, mouse, focus)
             if st == "live":
                 an.draw_round_start(S, self.me)

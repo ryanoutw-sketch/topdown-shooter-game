@@ -80,6 +80,10 @@ def synth_sounds():
             "smoke": mk(lambda t: rnd.uniform(-1, 1) * math.exp(-t * 2.5) * 0.5, 1.2, 0.35),
             "fire": mk(lambda t: rnd.uniform(-1, 1) * math.exp(-t * 1.5) * 0.6
                        + math.sin(math.tau * 70 * t) * math.exp(-t * 6) * 0.5, 1.0, 0.45),
+            "flash": mk(lambda t: (rnd.uniform(-1, 1) * math.exp(-t * 22)
+                                   + math.sin(math.tau * 2400 * t) * math.exp(-t * 30) * 0.6), 0.35, 0.55),
+            "ring": mk(lambda t: (math.sin(math.tau * 3100 * t) + 0.4 * math.sin(math.tau * 3170 * t))
+                       * min(1.0, t * 20) * math.exp(-t * 1.1) * 0.35, 3.0, 0.4),
             # ---- 動畫用
             "whoosh": mk(whoosh_fn(), 0.6, 0.35),
             "impact": mk(boom_fn(), 0.9, 0.55),

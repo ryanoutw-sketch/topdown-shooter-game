@@ -29,8 +29,9 @@ class HudMixin:
             pygame.draw.circle(s, (200, 200, 200), (12 + sm.x * k, 12 + sm.y * k), sm.r * k)
         for f in w.fires:
             pygame.draw.circle(s, (255, 120, 30), (12 + f.x * k, 12 + f.y * k), f.RAD * k)
+        blind = p is not None and p.alive and p.flash > 0.5
         for u in w.units:
-            if u.alive and self.can_see(w, vs, u, team):
+            if u.alive and self.can_see(w, vs, u, team) and not (blind and u.team != team):
                 col = (255, 255, 255) if u.uid == me else team_col(u.team)
                 pygame.draw.circle(s, col, (12 + u.x * k, 12 + u.y * k), 4 if u.uid == me or not u.bot else 3)
 
@@ -89,18 +90,19 @@ class HudMixin:
 
         labels = {"primary": WEAPONS[p.primary]["name"], "pistol": WEAPONS["pistol"]["name"],
                   "he": f"HE x{p.nades['he']}", "smoke": f"Smoke x{p.nades['smoke']}",
-                  "molotov": f"Molotov x{p.nades['molotov']}"}
-        x = SW // 2 - 330
+                  "molotov": f"Molotov x{p.nades['molotov']}", "flash": f"Flash x{p.nades['flash']}"}
+        cw = 112
+        x = SW // 2 - (len(SLOTS) * (cw + 6) - 6) // 2
         for i, sl in enumerate(SLOTS):
             sel = sl == p.slot
             empty = sl in NADES and p.nades[sl] <= 0
-            r = pygame.Rect(x, SH - 46, 128, 34)
+            r = pygame.Rect(x, SH - 46, cw, 34)
             pygame.draw.rect(s, (60, 70, 90) if sel else (20, 20, 25), r, border_radius=6)
             if sel:
                 pygame.draw.rect(s, (220, 220, 240), r, 2, border_radius=6)
             self.text(f"{i + 1} {labels[sl]}", self.f_s, (110, 110, 110) if empty else (235, 235, 235), r.center, "center",
                       max_w=r.w - 10)
-            x += 134
+            x += cw + 6
 
         w = p.weapon
         pygame.draw.rect(s, (20, 20, 25), (SW - 230, SH - 64, 216, 50), border_radius=8)

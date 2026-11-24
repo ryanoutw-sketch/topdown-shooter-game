@@ -12,6 +12,7 @@ class FX:
         self.sounds = sounds
         self.parts, self.tracers = [], []
         self.shake = self.hurt = self.hitmark = 0.0
+        self.snap, self.snap_pending = None, False  # 閃光彈殘影
 
     def play(self, name, x=None, y=None, listener=None):
         s = self.sounds.get(name)
@@ -52,6 +53,19 @@ class FX:
                     d = math.hypot(listener[0] - x, listener[1] - y)
                     self.shake = max(self.shake, 16 * max(0.0, 1 - d / 700))
                 self.play("boom", x, y, listener)
+            elif k == "flash":
+                x, y = e[1], e[2]
+                for _ in range(30):
+                    self.spark(x, y, random.choice([(255, 255, 255), (230, 240, 255)]), 520, 0.3, 6)
+                self.parts.append([x, y, 0, 0, 0.18, 0.18, (255, 255, 255), 110])
+                self.play("flash", x, y, listener)
+            elif k == "flashed" and e[1] == me:
+                self.snap_pending = True
+                s = self.sounds.get("ring")
+                if s:
+                    ch = s.play()
+                    if ch:
+                        ch.set_volume(0.25 + 0.75 * e[2])
             elif k == "snd":
                 self.play(e[1], e[2], e[3], listener)
             elif k == "click" and e[1] == me:
@@ -85,4 +99,5 @@ class FX:
 
     def reset(self):
         self.parts, self.tracers = [], []
+        self.snap, self.snap_pending = None, False
         self.shake = self.hurt = self.hitmark = 0.0

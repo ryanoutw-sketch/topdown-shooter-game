@@ -13,7 +13,7 @@ WIN_ROUNDS = 5
 R = 13  # 角色半徑
 
 # 遊戲版本：兩台電腦版本不同時，大廳會警告（改了連線內容或新增地圖時請更新）
-GAME_VERSION = "2026.11-maps"
+GAME_VERSION = "2026.11-flash"
 
 # ---------------- 動畫
 INTRO_TIME = 3.4      # 開啟遊戲的標題動畫（任意鍵可跳過）
@@ -39,9 +39,15 @@ WEAPONS = {
                 move=0.28, recoil=0.0, speed=185, pellets=1, range=2800, auto=False, snd="awp", length=28, view=840),
 }
 PRIMARIES = ["smg", "m4", "ak", "shotgun", "awp"]
-NADES = ("he", "smoke", "molotov")
-NADE_NAMES = {"he": "HE Grenade", "smoke": "Smoke Grenade", "molotov": "Molotov"}
-SLOTS = ["primary", "pistol", "he", "smoke", "molotov"]
+NADES = ("he", "smoke", "molotov", "flash")
+NADE_NAMES = {"he": "HE Grenade", "smoke": "Smoke Grenade", "molotov": "Molotov", "flash": "Flashbang"}
+SLOTS = ["primary", "pistol", "he", "smoke", "molotov", "flash"]
+
+# 閃光彈：引爆時間、影響半徑、最長致盲秒數（全白 FLASH_WHITE 秒後才開始淡出）
+FLASH_FUSE = 1.5
+FLASH_RAD = 900
+FLASH_MAX = 3.4
+FLASH_WHITE = 1.4
 
 DIFFS = {
     1: dict(name="Easy", bots=3, react=(0.6, 1.0), err=0.06, turn=4.0, burst=(3, 5)),

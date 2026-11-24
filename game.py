@@ -8,11 +8,11 @@ import random
 
 from bots import BotMixin
 from config import (DIFFS, COOP_BOT, ROUND_TIME, WIN_ROUNDS, BOT_NAMES, PRIMARIES, NADES, SLOTS,
-                    WEAPONS, R, TILE, REGEN_DELAY, REGEN_RATE, GAME_VERSION, FREEZE_TIME, SLOWMO_TIME, SLOWMO_SCALE, END_TIME)
+                    WEAPONS, R, TILE, FLASH_FUSE, FLASH_RAD, FLASH_MAX, REGEN_DELAY, REGEN_RATE, GAME_VERSION, FREEZE_TIME, SLOWMO_TIME, SLOWMO_SCALE, END_TIME)
 from grid import MapGrid, Smoke, Fire
 from map_data import MAPS
 from units import Unit, Nade
-from utils import tile_center
+from utils import tile_center, ang_diff
 
 
 class Game(BotMixin, MapGrid):
@@ -254,6 +254,8 @@ class Game(BotMixin, MapGrid):
             x, y = round(n.x), round(n.y)
             if n.kind == "he" and n.age > 1.6:
                 self.explode(n)
+            elif n.kind == "flash" and n.age > FLASH_FUSE:
+                self.flashbang(n)
             elif n.kind == "smoke" and (sp < 5 and n.age > 0.6 or n.age > 3):
                 n.done = True
                 s = Smoke(x, y, self.next_id)
@@ -280,6 +282,28 @@ class Game(BotMixin, MapGrid):
                 self.damage(u, 98 * (1 - d / RAD), n.owner, "HE Grenade")
         self.ev("boom", round(n.x), round(n.y))
 
+    def flashbang(self, n):
+        """閃光彈：視線沒被牆/煙擋住的人會被閃，越近、越正對著看越嚴重（隊友也會被閃）。"""
+        n.done = True
+        self.ev("flash", round(n.x), round(n.y))
+        for u in self.units:
+            d = math.hypot(u.x - n.x, u.y - n.y)
+            if not u.alive or d > FLASH_RAD or not self.los(u.x, u.y, n.x, n.y):
+                continue
+            near = 1 - d / FLASH_RAD
+            near = near ** 0.6 if d > 90 else 1.0
+            off = abs(ang_diff(u.angle, math.atan2(n.y - u.y, n.x - u.x)))
+            face = 1.0 if off < 0.9 else 0.55 if off < 1.9 else 0.15  # 正對 / 側面 / 背對
+            if d < 120:
+                face = max(face, 0.6)  # 貼臉爆開，背對也很亮
+            t = FLASH_MAX * near * face
+            if t > 0.15:
+                u.flash = max(u.flash, t)
+                if u.bot:
+                    u.react, u.burst = None, 0
+                else:
+                    self.ev("flashed", u.uid, round(min(1.0, t / FLASH_MAX), 2))
+
     def update_world(self, dt):
         for s in self.smokes:
             s.age += dt
@@ -298,6 +322,7 @@ class Game(BotMixin, MapGrid):
     # ---------------- 共用
     def tick_unit(self, u, dt):
         u.cd = max(0.0, u.cd - dt)
+        u.flash = max(0.0, u.flash - dt)
         u.recoil = max(0.0, u.recoil - dt * 0.35)
         if u.reload_t > 0:
             u.reload_t -= dt

@@ -12,9 +12,9 @@ from map_data import DEFAULT_MAP
 class VUnit:
     def __init__(self, a):
         (self.uid, self.name, self.team, bot, self.x, self.y, self.angle, self.hp, alive, self.primary, self.slot,
-         self.mag, self.res, self.rl, he, sm, mo, self.moving, self.recoil, self.regen) = a
+         self.mag, self.res, self.rl, he, sm, mo, self.moving, self.recoil, self.regen, fl, self.flash) = a
         self.bot, self.alive = bool(bot), bool(alive)
-        self.nades = {"he": he, "smoke": sm, "molotov": mo}
+        self.nades = {"he": he, "smoke": sm, "molotov": mo, "flash": fl}
 
     @property
     def weapon(self):

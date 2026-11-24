@@ -132,7 +132,7 @@ class MenuMixin:
             done = uid in S["picks"] or (uid == me and my_pick)
             status.append(f"{S['names'][uid]} {'✔ Ready' if done else '… Choosing'}")
         self.text("    ".join(status), self.f_m, (230, 230, 230), (SW // 2, SH - 78), "center")
-        self.text("Vision depends on the gun in hand (grenades use your primary) · Includes USP-S, HE, Smoke, Molotov · Press 1–5 or click",
+        self.text("Vision depends on the gun in hand (grenades use your primary) · Includes USP-S, HE, Smoke, Molotov, Flash · Press 1–5 or click",
                   self.f_s, (200, 200, 200), (SW // 2, SH - 36), "center")
         return rects
 

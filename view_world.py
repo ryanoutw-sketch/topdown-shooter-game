@@ -5,7 +5,7 @@ import math
 
 import pygame
 
-from config import SW, SH, ZOOM, R, NADES, DARK_ALPHA
+from config import SW, SH, ZOOM, R, NADES, DARK_ALPHA, FOG_OF_WAR
 from utils import team_col, view_r
 
 
@@ -91,7 +91,7 @@ class WorldDrawMixin:
                                        size * r / sm.RMAX * Z)
             s.blit(sl, (0, 0))
 
-        if vs is not None:  # 圓形戰爭迷霧（合作時隊友的視野圓合併）
+        if vs is not None and FOG_OF_WAR:  # 圓形戰爭迷霧（合作時隊友的視野圓合併）
             dk = self.dark
             dk.fill((0, 0, 0, DARK_ALPHA))
             for v in vs:

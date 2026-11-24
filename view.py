@@ -10,7 +10,7 @@ import random
 
 import pygame
 
-from config import SW, SH, MW, MH, TILE, ZOOM, VW, VH, WEAPONS, FOG_EDGE, DARK_ALPHA, FOG_OF_WAR
+from config import SW, SH, MW, MH, TILE, ZOOM, VW, VH, WEAPONS, FOG_EDGE, DARK_ALPHA, FOG_OF_WAR, WALLS_HIDE
 from utils import font, view_r
 from view_hud import HudMixin
 from view_menus import MenuMixin
@@ -62,8 +62,8 @@ class View(WorldDrawMixin, HudMixin, MenuMixin):
         return focus
 
     def viewers(self, w, me):
-        if not FOG_OF_WAR:
-            return None  # 沒有戰爭迷霧：全部看得到
+        if not FOG_OF_WAR and not WALLS_HIDE:
+            return None  # 沒有戰爭迷霧、也不擋牆：全部看得到
         if w.unit(me) is None:
             return None  # 觀戰者看得到全部
         team = self.my_team(w, me)
@@ -72,8 +72,11 @@ class View(WorldDrawMixin, HudMixin, MenuMixin):
 
     @staticmethod
     def can_see(w, vs, u, team):
-        return vs is None or u.team == team or any(
-            math.hypot(u.x - v.x, u.y - v.y) < view_r(v) and w.los(v.x, v.y, u.x, u.y) for v in vs)
+        if vs is None or u.team == team:
+            return True
+        if not FOG_OF_WAR:  # 沒有視野圓：距離不限，只看中間有沒有被牆／箱子／煙霧擋住
+            return any(w.los(v.x, v.y, u.x, u.y) for v in vs)
+        return any(math.hypot(u.x - v.x, u.y - v.y) < view_r(v) and w.los(v.x, v.y, u.x, u.y) for v in vs)
 
     @staticmethod
     def make_hole(rs):

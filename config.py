@@ -13,7 +13,8 @@ WIN_ROUNDS = 5
 R = 13  # 角色半徑
 
 # ---------------- 規則開關（這個分支：nofog-akm4-noregen-fixedside）
-FOG_OF_WAR = False   # 戰爭迷霧（False = 全地圖都看得到，敵人也不會被牆遮住）
+FOG_OF_WAR = False   # 戰爭迷霧（False = 全地圖都看得到，沒有視野圓）
+WALLS_HIDE = True    # 沒有戰爭迷霧時，敵人仍會被牆、箱子、煙霧擋住（True = 隔牆看不到人）
 REGEN = False        # 角色自動回血
 SWAP_SIDES = False   # 對戰模式每回合交換攻守（False = 主機固定防守方、加入者固定進攻方）
 SIDEARM = None       # 副武器：None = 沒有手槍；"pistol" = 附 USP-S

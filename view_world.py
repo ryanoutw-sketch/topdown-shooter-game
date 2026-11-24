@@ -5,7 +5,7 @@ import math
 
 import pygame
 
-from config import SW, SH, ZOOM, R, NADES, FOG_EDGE, DARK_ALPHA, FLASH_MAX, FLASH_WHITE
+from config import SW, SH, ZOOM, R, NADES, FOG_EDGE, DARK_ALPHA, FLASH_MAX, FLASH_WHITE, FLASH_GHOST
 from utils import team_col, view_r
 
 
@@ -107,19 +107,23 @@ class WorldDrawMixin:
         """被閃光彈閃到：整個畫面直接全白，最後一段時間才淡出（閃得越久，全白越久）。"""
         p = w.unit(me)
         if not p or not p.alive or p.flash <= 0:
-            fx.flash_peak = 0.0
+            fx.flash_peak, fx.snap = 0.0, None
             return
-        if p.flash > fx.flash_peak:  # 新被閃（或被閃得更久）
+        if p.flash > fx.flash_peak:  # 新被閃（或被閃得更久）：存下這一刻的畫面當殘影
             fx.flash_peak = p.flash
+            fx.snap = self.s.copy()
         fade = min(FLASH_MAX - FLASH_WHITE, fx.flash_peak * 0.6)  # 淡出時間
         a = min(1.0, p.flash / max(0.05, fade))
         if a >= 1.0:
             self.s.fill((255, 255, 255))
-            return
-        if not hasattr(self, "white"):
-            self.white = pygame.Surface((SW, SH), pygame.SRCALPHA)
-        self.white.fill((255, 255, 255, int(255 * a)))
-        self.s.blit(self.white, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
+        else:
+            if not hasattr(self, "white"):
+                self.white = pygame.Surface((SW, SH), pygame.SRCALPHA)
+            self.white.fill((255, 255, 255, int(255 * a)))
+            self.s.blit(self.white, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
+        if fx.snap is not None:  # 殘影：淡淡疊在白光上，跟著一起淡掉
+            fx.snap.set_alpha(int(FLASH_GHOST * a))
+            self.s.blit(fx.snap, (0, 0))
 
     def draw_unit(self, u, cx, cy, me, team):
         Z = ZOOM

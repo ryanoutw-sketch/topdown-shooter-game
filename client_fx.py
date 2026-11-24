@@ -13,6 +13,7 @@ class FX:
         self.parts, self.tracers = [], []
         self.shake = self.hurt = self.hitmark = 0.0
         self.flash_peak = 0.0  # 這次被閃的最長秒數（決定全白多久）
+        self.snap = None  # 被閃那一刻的畫面（殘影）
 
     def play(self, name, x=None, y=None, listener=None):
         s = self.sounds.get(name)
@@ -98,5 +99,5 @@ class FX:
 
     def reset(self):
         self.parts, self.tracers = [], []
-        self.flash_peak = 0.0
+        self.flash_peak, self.snap = 0.0, None
         self.shake = self.hurt = self.hitmark = 0.0

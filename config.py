@@ -48,6 +48,7 @@ FLASH_FUSE = 1.5
 FLASH_RAD = 900
 FLASH_MAX = 3.4
 FLASH_WHITE = 1.4
+FLASH_GHOST = 55     # 殘影濃淡（0 = 沒有殘影，255 = 完全看得清楚）
 
 DIFFS = {
     1: dict(name="Easy", bots=3, react=(0.6, 1.0), err=0.06, turn=4.0, burst=(3, 5)),

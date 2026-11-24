@@ -11,7 +11,7 @@ import random
 import pygame
 
 from config import SW, SH, MW, MH, TILE, ZOOM, VW, VH
-from utils import font, text_surface, view_r
+from utils import font, text_surface, view_r, fit_width
 from view_hud import HudMixin
 from view_menus import MenuMixin
 from view_world import WorldDrawMixin
@@ -30,11 +30,12 @@ class View(WorldDrawMixin, HudMixin, MenuMixin):
         self.f_s, self.f_m, self.f_l, self.f_xl = font(18), font(24, True), font(40, True), font(64, True)
         self.cam = (0.0, 0.0)
 
-    def text(self, t, f, col, pos, anchor="topleft", shadow=True):
-        img = text_surface(f, t, col)
+    def text(self, t, f, col, pos, anchor="topleft", shadow=True, max_w=SW - 24):
+        """畫文字；超過 max_w 會自動縮小（Mac 等其他電腦的字型比較寬時不會超出框）。"""
+        img = fit_width(text_surface(f, t, col), max_w)
         r = img.get_rect(**{anchor: pos})
         if shadow:
-            sh = text_surface(f, t, (0, 0, 0))
+            sh = fit_width(text_surface(f, t, (0, 0, 0)), max_w)
             self.s.blit(sh, r.move(2, 2), special_flags=pygame.BLEND_ALPHA_SDL2)
         self.s.blit(img, r, special_flags=pygame.BLEND_ALPHA_SDL2)
         return r

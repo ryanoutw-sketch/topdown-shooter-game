@@ -12,7 +12,7 @@ import pygame
 
 from config import SW, SH, WIN_ROUNDS, INTRO_TIME, IRIS_TIME, FREEZE_TIME, CT_COL, T_COL, TEAM_NAMES
 from map_data import spawn_where
-from utils import font, team_col, text_surface
+from utils import font, team_col, text_surface, fit_width
 
 GOLD = (240, 200, 90)
 INK = (8, 8, 12)
@@ -78,8 +78,8 @@ class Animator:
     def text(self, txt, fnt, col, center, alpha=1.0, scale=1.0, shadow=True):
         if alpha <= 0.01 or scale <= 0.01:
             return
-        img = text_surface(fnt, txt, col)
-        sh = text_surface(fnt, txt, (0, 0, 0)) if shadow else None
+        img = fit_width(text_surface(fnt, txt, col), SW - 40)   # 字型較寬的電腦上不超出畫面
+        sh = fit_width(text_surface(fnt, txt, (0, 0, 0)), SW - 40) if shadow else None
         if scale != 1.0:
             size = (max(1, int(img.get_width() * scale)), max(1, int(img.get_height() * scale)))
             img = pygame.transform.smoothscale(img, size)

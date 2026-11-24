@@ -37,6 +37,14 @@ def text_surface(fnt, text, color):
     return surf
 
 
+def fit_width(surf, max_w):
+    """文字太寬時等比例縮小到 max_w（不同電腦字型寬度不同，避免超出框或疊到旁邊）。"""
+    if max_w and surf.get_width() > max_w > 0:
+        k = max_w / surf.get_width()
+        return pygame.transform.smoothscale(surf, (int(max_w), max(1, int(surf.get_height() * k))))
+    return surf
+
+
 def ang_diff(a, b):
     return (b - a + math.pi) % math.tau - math.pi
 

@@ -22,7 +22,7 @@ class MenuMixin:
             pygame.draw.rect(s, (60, 66, 84) if sel else (34, 36, 44), r, border_radius=10)
             if sel:
                 pygame.draw.rect(s, (230, 200, 90), r, 2, border_radius=10)
-            self.text(MODE_NAMES[m], self.f_m, (240, 240, 240), r.center, "center")
+            self.text(MODE_NAMES[m], self.f_m, (240, 240, 240), r.center, "center", max_w=r.w - 16)
             acts.append((r, ("mode", m)))
         if S["mode"] == "coop":
             for i, k in enumerate((1, 2, 3)):
@@ -32,7 +32,7 @@ class MenuMixin:
                 pygame.draw.rect(s, (60, 66, 84) if sel else (34, 36, 44), r, border_radius=10)
                 if sel:
                     pygame.draw.rect(s, (230, 200, 90), r, 2, border_radius=10)
-                self.text(f"{k}  {d['name']}  ({d['bots']} NPCs)", self.f_s, (240, 240, 240), r.center, "center")
+                self.text(f"{k}  {d['name']}  ({d['bots']} NPCs)", self.f_s, (240, 240, 240), r.center, "center", max_w=r.w - 12)
                 acts.append((r, ("diff", k)))
             self.text("Co-op NPCs are weakened (65% damage, slower reactions, worse aim) · 2 extra NPCs with two players",
                       self.f_s, (170, 170, 170), (SW // 2, 330), "center")
@@ -50,11 +50,11 @@ class MenuMixin:
             pygame.draw.rect(s, (60, 66, 84) if sel else (34, 36, 44), r, border_radius=10)
             if sel:
                 pygame.draw.rect(s, (230, 200, 90), r, 2, border_radius=10)
-            self.text(MAPS[mid]["name"], self.f_m, (240, 240, 240) if sel else (180, 180, 190), r.center, "center")
+            self.text(MAPS[mid]["name"], self.f_m, (240, 240, 240) if sel else (180, 180, 190), r.center, "center", max_w=r.w - 16)
             acts.append((r, ("map", mid)))
         if w is not None and getattr(w, "map_id", None) == cur:  # 目前地圖的縮圖
-            thumb = pygame.transform.smoothscale(w.mini, (200, 152))
-            tr = thumb.get_rect(topleft=(SW // 2 + 320, 412))
+            thumb = pygame.transform.smoothscale(w.mini, (164, 125))   # 縮圖放在玩家列表右邊、提示文字上方
+            tr = thumb.get_rect(topleft=(SW // 2 + 322, 408))
             s.blit(thumb, tr)
             pygame.draw.rect(s, (230, 200, 90), tr, 2)
 
@@ -64,7 +64,7 @@ class MenuMixin:
             label = f"{S['names'][uid]}{' (Host)' if uid == 0 else ''}{'  ← You' if uid == me else ''}"
             pygame.draw.rect(s, (30, 32, 40), (SW // 2 - 300, y, 600, 48), border_radius=8)
             pygame.draw.circle(s, (90, 220, 110) if connected else (110, 110, 110), (SW // 2 - 270, y + 24), 8)
-            self.text(label if connected else "Waiting for Player 2…", self.f_m, (235, 235, 235), (SW // 2 - 245, y + 24), "midleft")
+            self.text(label if connected else "Waiting for Player 2…", self.f_m, (235, 235, 235), (SW // 2 - 245, y + 24), "midleft", max_w=530)
             y += 60
         if is_host:
             self.text(f"Other player runs:  py topdown_shooter.py --join {ip}    (port {port})", self.f_m, (230, 200, 90), (SW // 2, 575), "center")
@@ -110,7 +110,7 @@ class MenuMixin:
             if key == my_pick:
                 pygame.draw.rect(s, (230, 200, 90), r, 3, border_radius=10)
             self.text(f"{i + 1}", self.f_l, (230, 200, 90), (r.x + 36, r.centery), "center")
-            self.text(wp["name"], self.f_m, (240, 240, 240), (r.x + 70, r.centery), "midleft")
+            self.text(wp["name"], self.f_m, (240, 240, 240), (r.x + 70, r.centery), "midleft", max_w=190)
             stats = [("Dmg", min(1.0, wp["dmg"] * wp["pellets"] / 120)), ("Rate", min(1.0, 0.07 / wp["rate"])),
                      ("Aim", 1 - min(1.0, (wp["spread"] + wp["move"] * 0.3) / 0.11)), ("Move", (wp["speed"] - 170) / 80),
                      ("View", (wp["view"] - 380) / 480)]
@@ -120,7 +120,7 @@ class MenuMixin:
             sx = max(r.x + 270, name_end + 16)
             bar_w = 54
             for name, v in stats:
-                label = self.text(name, self.f_s, (180, 180, 180), (sx, r.centery), "midleft", shadow=False)
+                label = self.text(name, self.f_s, (180, 180, 180), (sx, r.centery), "midleft", shadow=False, max_w=38)
                 bar_x = label.right + 6
                 pygame.draw.rect(s, (60, 60, 70), (bar_x, r.centery - 5, bar_w, 10))
                 pygame.draw.rect(s, (110, 200, 120) if name != "View" else (110, 170, 240),

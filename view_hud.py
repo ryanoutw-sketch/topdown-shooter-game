@@ -80,9 +80,12 @@ class HudMixin:
         self.text("+", self.f_l, (90, 230, 120) if p.regen else (240, 240, 240), (36, SH - 39), "center")
         if p.regen:
             self.text("Regenerating", self.f_s, (90, 230, 120), (130, SH - 66), "midleft")
-        self.text(str(int(math.ceil(p.hp))), self.f_l, (240, 240, 240) if p.hp > 30 else (255, 70, 70), (60, SH - 39), "midleft")
-        pygame.draw.rect(s, (60, 60, 60), (130, SH - 44, 100, 10))
-        pygame.draw.rect(s, (90, 220, 110) if p.hp > 30 else (240, 70, 60), (130, SH - 44, p.hp, 10))
+        num = self.text(str(int(math.ceil(p.hp))), self.f_l, (240, 240, 240) if p.hp > 30 else (255, 70, 70),
+                        (60, SH - 39), "midleft", max_w=90)
+        bx = max(130, num.right + 10)   # 血條接在數字後面（字型較寬時不會被蓋住）
+        bw = 232 - bx
+        pygame.draw.rect(s, (60, 60, 60), (bx, SH - 44, bw, 10))
+        pygame.draw.rect(s, (90, 220, 110) if p.hp > 30 else (240, 70, 60), (bx, SH - 44, bw * p.hp / 100, 10))
 
         labels = {"primary": WEAPONS[p.primary]["name"], "pistol": WEAPONS["pistol"]["name"],
                   "he": f"HE x{p.nades['he']}", "smoke": f"Smoke x{p.nades['smoke']}",
@@ -95,20 +98,21 @@ class HudMixin:
             pygame.draw.rect(s, (60, 70, 90) if sel else (20, 20, 25), r, border_radius=6)
             if sel:
                 pygame.draw.rect(s, (220, 220, 240), r, 2, border_radius=6)
-            self.text(f"{i + 1} {labels[sl]}", self.f_s, (110, 110, 110) if empty else (235, 235, 235), r.center, "center")
+            self.text(f"{i + 1} {labels[sl]}", self.f_s, (110, 110, 110) if empty else (235, 235, 235), r.center, "center",
+                      max_w=r.w - 10)
             x += 134
 
         w = p.weapon
         pygame.draw.rect(s, (20, 20, 25), (SW - 230, SH - 64, 216, 50), border_radius=8)
         if w:
-            self.text(f"{p.mag}", self.f_l, (240, 240, 240) if p.mag else (255, 70, 70), (SW - 150, SH - 39), "midright")
-            self.text(f"/ {p.res}", self.f_m, (170, 170, 170), (SW - 140, SH - 39), "midleft")
+            self.text(f"{p.mag}", self.f_l, (240, 240, 240) if p.mag else (255, 70, 70), (SW - 150, SH - 39), "midright", max_w=70)
+            self.text(f"/ {p.res}", self.f_m, (170, 170, 170), (SW - 140, SH - 39), "midleft", max_w=118)
             if p.rl > 0:
                 pygame.draw.rect(s, (60, 60, 60), (SW - 222, SH - 20, 200, 4))
                 pygame.draw.rect(s, (240, 200, 80), (SW - 222, SH - 20, 200 * (1 - p.rl), 4))
                 self.text("Reloading…", self.f_m, (240, 200, 80), (SW // 2, SH // 2 + 60), "center")
         else:
-            self.text(NADE_NAMES[p.slot], self.f_m, (240, 240, 240), (SW - 122, SH - 39), "center")
+            self.text(NADE_NAMES[p.slot], self.f_m, (240, 240, 240), (SW - 122, SH - 39), "center", max_w=200)
 
         mx, my = mouse
         if w:

@@ -12,7 +12,7 @@ class FX:
         self.sounds = sounds
         self.parts, self.tracers = [], []
         self.shake = self.hurt = self.hitmark = 0.0
-        self.snap, self.snap_pending = None, False  # 閃光彈殘影
+        self.flash_peak = 0.0  # 這次被閃的最長秒數（決定全白多久）
 
     def play(self, name, x=None, y=None, listener=None):
         s = self.sounds.get(name)
@@ -60,7 +60,6 @@ class FX:
                 self.parts.append([x, y, 0, 0, 0.18, 0.18, (255, 255, 255), 110])
                 self.play("flash", x, y, listener)
             elif k == "flashed" and e[1] == me:
-                self.snap_pending = True
                 s = self.sounds.get("ring")
                 if s:
                     ch = s.play()
@@ -99,5 +98,5 @@ class FX:
 
     def reset(self):
         self.parts, self.tracers = [], []
-        self.snap, self.snap_pending = None, False
+        self.flash_peak = 0.0
         self.shake = self.hurt = self.hitmark = 0.0

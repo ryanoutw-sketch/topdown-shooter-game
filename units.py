@@ -24,12 +24,17 @@ class Unit:
         self.path, self.goal_tile, self.repath = [], None, 0.0
         self.route, self.react, self.lost_t = [], None, 99.0
         self.last_known = self.heard = self.hunt = None
+        self.engage = 0.0  # NPC 盯著目標多久了（越久越準）
         self.hunt_t = self.strafe_t = self.pause = self.stuck_t = self.nade_cd = 0.0
         self.strafe_dir, self.burst, self.burst_len = 0, 0, 5
 
     @property
     def weapon(self):
         return WEAPONS[self.guns[self.slot]] if self.slot in self.guns else None
+
+    @property
+    def primary(self):
+        return self.guns["primary"]
 
     def ser(self):
         w = self.weapon

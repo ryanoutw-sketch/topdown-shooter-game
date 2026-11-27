@@ -51,15 +51,19 @@ FLASH_WHITE = 1.4
 FLASH_GHOST = 55     # 殘影濃淡（0 = 沒有殘影，255 = 完全看得清楚）
 
 DIFFS = {
-    1: dict(name="Easy", bots=3, react=(0.6, 1.0), err=0.06, turn=4.0, burst=(3, 5)),
-    2: dict(name="Normal", bots=5, react=(0.35, 0.65), err=0.035, turn=6.0, burst=(4, 7)),
-    3: dict(name="Hard", bots=5, react=(0.18, 0.38), err=0.017, turn=9.0, burst=(5, 9)),
+    1: dict(name="Easy", bots=3, react=(0.8, 1.3), err=0.09, turn=3.5, burst=(2, 4)),
+    2: dict(name="Normal", bots=5, react=(0.5, 0.85), err=0.06, turn=5.0, burst=(3, 5)),
+    3: dict(name="Hard", bots=5, react=(0.3, 0.55), err=0.035, turn=7.5, burst=(4, 6)),
 }
 # 合作模式 NPC 減弱：傷害倍率、反應時間倍率、額外瞄準誤差、轉身速度倍率
-COOP_BOT = dict(dmg=0.65, react=1.4, err=0.02, turn=0.75)
+COOP_BOT = dict(dmg=0.55, react=1.6, err=0.03, turn=0.7)
+
+# NPC 也有戰爭迷霧：跟玩家一樣，只看得到自己手上武器的視野圓內、沒被牆／箱子／煙霧擋住的人
+# NPC 剛發現你時瞄不準：一開始多 BOT_SETTLE[0] 的散布，BOT_SETTLE[1] 秒內慢慢瞄準
+BOT_SETTLE = (0.07, 1.2)
 
 # 回血：受傷後 REGEN_DELAY 秒開始回，每秒 REGEN_RATE。
-# 規則：回血速度必須低於任何一把槍的 DPS（最低的是 AWP ≈ 79/秒；合作模式 NPC 打 65% 也有 ≈ 51/秒）
+# 規則：回血速度必須低於任何一把槍的 DPS（最低的是 AWP ≈ 79/秒；合作模式 NPC 打 55% 也有 ≈ 43/秒）
 MIN_GUN_DPS = min(w["dmg"] * w["pellets"] / w["rate"] for w in WEAPONS.values())
 REGEN_DELAY = 4.0
 REGEN_RATE = 6.0

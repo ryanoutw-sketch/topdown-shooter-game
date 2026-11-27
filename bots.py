@@ -7,7 +7,7 @@ import math
 import random
 
 from config import TILE, R, WEAPONS
-from utils import ang_diff, tile_center
+from utils import ang_diff, tile_center, view_r
 
 
 class BotMixin:
@@ -114,12 +114,13 @@ class BotMixin:
         tgt, dist = None, 1e9
         for e in enemies:
             d = math.hypot(e.x - b.x, e.y - b.y)
-            if d < 1300 and d < dist and self.los(b.x, b.y, e.x, e.y):
+            if d < dist and d < view_r(b) and self.los(b.x, b.y, e.x, e.y):  # NPC 的戰爭迷霧
                 tgt, dist = e, d
 
         if tgt:
             b.last_known = (tgt.x, tgt.y)
             b.lost_t = 0.0
+            b.engage += dt
             ta = math.atan2(tgt.y - b.y, tgt.x - b.x)
             if b.react is None:
                 behind = abs(ang_diff(b.angle, ta)) > 1.8
@@ -153,6 +154,7 @@ class BotMixin:
             b.lost_t += dt
             if b.lost_t > 1.2:
                 b.react = None
+                b.engage = 0.0
             goal = None
             if b.last_known:
                 goal = b.last_known

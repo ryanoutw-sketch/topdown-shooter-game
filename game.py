@@ -7,7 +7,7 @@ import math
 import random
 
 from bots import BotMixin
-from config import (DIFFS, COOP_BOT, ROUND_TIME, WIN_ROUNDS, BOT_NAMES, PRIMARIES, NADES, SLOTS,
+from config import (DIFFS, COOP_BOT, BOT_SETTLE, ROUND_TIME, WIN_ROUNDS, BOT_NAMES, PRIMARIES, NADES, SLOTS,
                     WEAPONS, R, TILE, FLASH_FUSE, FLASH_RAD, FLASH_MAX, REGEN_DELAY, REGEN_RATE, GAME_VERSION, FREEZE_TIME, SLOWMO_TIME, SLOWMO_SCALE, END_TIME)
 from grid import MapGrid, Smoke, Fire
 from map_data import MAPS
@@ -138,7 +138,9 @@ class Game(BotMixin, MapGrid):
     def spread(self, u):
         w = u.weapon
         s = w["spread"] + w["move"] * u.moving + u.recoil
-        return s + (self.D["err"] if u.bot else 0)
+        if u.bot:  # NPC：基本誤差 + 剛發現目標時的額外誤差（慢慢瞄準）
+            s += self.D["err"] + BOT_SETTLE[0] * max(0.0, 1 - u.engage / BOT_SETTLE[1])
+        return s
 
     def try_fire(self, u):
         w = u.weapon
